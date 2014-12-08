@@ -1,0 +1,3 @@
+S src*/**
+PKG compiler-libs.common sedlex.ppx uutf uucp
+PKG oUnit

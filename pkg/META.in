@@ -1,0 +1,4 @@
+version = "%{version}%"
+description = "Multilingualization for OCaml source code"
+error(pkg_camlp4) = "m17n is incompatible with camlp4"
+preprocessor = "./pp_m17n"

@@ -1,0 +1,11 @@
+language: c
+script:
+  - echo "yes" | sudo add-apt-repository ppa:avsm/ocaml42+opam12
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq opam ocaml-native-compilers
+  - export OPAMYES=1
+  - opam init
+  - eval `opam config env`
+  - opam pin add -n -k path m17n .
+  - opam install --deps-only -d -t m17n
+  - opam install -d -t -v m17n

@@ -1,0 +1,7 @@
+*.native
+*.byte
+*.docdir
+_build
+*.install
+pkg/META
+src_test/_tags
