@@ -19,3 +19,7 @@ val lexeme : lexbuf -> Uutf.uchar list
 (** [fill_lexbuf lexbuf oldlexbuf] fills [oldlexbuf.lex_start_p] and [oldlexbuf.lex_curr_p]
     with data from [lexbuf]. *)
 val fill_lexbuf : lexbuf -> Lexing.lexbuf -> unit
+
+(** [encode ?normalize lexeme] encodes [lexeme], a list of codepoints,
+    as an UTF-8 string, optionally normalizing it as [normalize]. *)
+val encode : ?normalize:[< `NFC | `NFD] -> Uutf.uchar list -> string

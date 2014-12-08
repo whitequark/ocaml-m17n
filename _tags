@@ -1,6 +1,6 @@
 true: warn(@5@8@10@11@12@14@23@24@26@29@40), bin_annot, safe_string
 
 "src": include
-<src/*.{ml,mli,byte,native}>: package(compiler-libs.common), package(gen), package(uutf), package(sedlex.ppx)
+<src/*.{ml,mli,byte,native}>: package(compiler-libs.common), package(gen), package(uutf), package(uunf), package(sedlex.ppx)
 
 <src_test/*.{ml,byte,native}>: debug, m17n, package(oUnit)

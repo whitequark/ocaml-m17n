@@ -96,3 +96,25 @@ let fill_lexbuf lexbuf oldlexbuf =
   let open Lexing in
   oldlexbuf.lex_start_p <- lexbuf.slex_start_p;
   oldlexbuf.lex_curr_p <- lexbuf.slex_curr_p
+
+let uunf_normalize form uchars =
+  let buf  = Buffer.create (List.length uchars) in
+  let uunf = Uunf.create form in
+  let rec add uchar =
+    match Uunf.add uunf uchar with
+    | `Uchar u -> Uutf.Buffer.add_utf_8 buf u; add `Await
+    | `Await -> ()
+  in
+  List.iter (fun uchar -> add (`Uchar uchar)) uchars;
+  add `End;
+  Buffer.contents buf
+
+let encode ?normalize uchars =
+  match normalize with
+  | None ->
+    let buf = Buffer.create (List.length uchars) in
+    List.iter (Uutf.Buffer.add_utf_8 buf) uchars;
+    Buffer.contents buf
+  | Some form ->
+    uunf_normalize form uchars
+
