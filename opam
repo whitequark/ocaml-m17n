@@ -20,6 +20,10 @@ build-test: [
 depends: [
   "ocamlfind" {build}
   "sedlex"
+  "uutf"
+  "uunf"
+  "uucp"
+  "gen"
   "ounit"     {test}
 ]
 available: [ ocaml-version >= "4.02.0" ]
