@@ -1,8 +1,8 @@
 type lexbuf
 
-(* Required by sedlex *)
+(* The interface used by Sedlex *)
 val start : lexbuf -> unit
-val next : lexbuf -> int
+val next : lexbuf -> Uutf.uchar
 val mark : lexbuf -> int -> unit
 val backtrack : lexbuf -> int
 
@@ -12,6 +12,10 @@ val backtrack : lexbuf -> int
     [pos_fname] field. *)
 val create : ?filename:string -> string Gen.t -> lexbuf
 
-(** [fill_lexbuf sedlexbuf lexbuf] fills [lexbuf.lex_start_p] and [lexbuf.lex_curr_p]
-    with data from [sedlexbuf]. *)
+(** [lexeme lexbuf] returns the list of codepoints comprising
+    the current lexeme. *)
+val lexeme : lexbuf -> Uutf.uchar list
+
+(** [fill_lexbuf lexbuf oldlexbuf] fills [oldlexbuf.lex_start_p] and [oldlexbuf.lex_curr_p]
+    with data from [lexbuf]. *)
 val fill_lexbuf : lexbuf -> Lexing.lexbuf -> unit

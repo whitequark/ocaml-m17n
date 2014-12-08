@@ -1,3 +1,4 @@
-S src*/**
+B _build/**/*
+S src*/**/*
 PKG compiler-libs.common sedlex.ppx uutf uunf uucp gen
 PKG oUnit
