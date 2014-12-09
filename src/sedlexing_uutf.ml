@@ -103,6 +103,9 @@ let backtrack lexbuf =
 let lexeme lexbuf =
   List.rev lexbuf.slex_lexeme
 
+let lexeme_char n lexbuf =
+  List.nth (lexeme lexbuf) n
+
 let sub_lexeme (lft, rgt) lexbuf =
   let map i = if i >= 0 then i else -(i + 1) in
   lexbuf.slex_lexeme |> CCList.drop (map rgt) |>

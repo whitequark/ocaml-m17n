@@ -23,6 +23,9 @@ val create : ?kind:[`Batch|`Toplevel] -> ?filename:string -> string Gen.t -> lex
     the current lexeme. *)
 val lexeme : lexbuf -> Uutf.uchar list
 
+(** [lexeme_char n lexbuf] ≡ [List.nth (lexeme lexbuf) n] *)
+val lexeme_char : int -> lexbuf -> Uutf.uchar
+
 (** [sub_lexeme (lft, rgt) lexbuf] returns the subset of the list
     of codepoints comprising the current lexeme. [lft] and [rgt]
     indicate the amount of characters to sk *)
