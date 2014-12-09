@@ -38,6 +38,11 @@ val utf8_lexeme : ?normalize:[< `NFC | `NFD] -> lexbuf -> string
     [encode ?normalize (sub_lexeme range lexbuf)] *)
 val utf8_sub_lexeme : ?normalize:[< `NFC | `NFD] -> int * int -> lexbuf -> string
 
+(** [expand_token lexbuf f] memorizes the token start position
+    in [lexbuf], calls [f ()], then replaces the token start position
+    with the memorized one, thus allowing you to  *)
+val expand_token : lexbuf -> (unit -> 'a) -> 'a
+
 (** [fill_lexbuf lexbuf oldlexbuf] fills [oldlexbuf.lex_start_p] and [oldlexbuf.lex_curr_p]
     with data from [lexbuf]. *)
 val fill_lexbuf : lexbuf -> Lexing.lexbuf -> unit

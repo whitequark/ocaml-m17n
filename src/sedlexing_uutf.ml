@@ -147,6 +147,12 @@ let utf8_lexeme ?normalize lexbuf =
 let utf8_sub_lexeme ?normalize range lexbuf =
   encode ?normalize (sub_lexeme range lexbuf)
 
+let expand_token lexbuf f =
+  let start_p = lexbuf.slex_start_p in
+  let result = f () in
+  lexbuf.slex_start_p <- start_p;
+  result
+
 let location lexbuf =
   Location.{
     loc_ghost = false;
