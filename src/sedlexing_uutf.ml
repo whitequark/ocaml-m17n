@@ -19,7 +19,8 @@ let decoder input =
   let rec gen () =
     match Uutf.decode uutf with
     | `End -> None
-    | `Uchar u -> Some (Uutf.decoder_count uutf - !pos, u)
+    | `Uchar u ->
+      Some (Uutf.decoder_count uutf - !pos, u)
     | `Await -> (* We exhausted the buffer. *)
       begin match input () with
       | None -> (* We exhausted the input. *)
@@ -58,6 +59,7 @@ let memorize lexbuf =
 
 let start lexbuf =
   lexbuf.slex_start_p <- lexbuf.slex_curr_p;
+  lexbuf.slex_lexeme <- [];
   lexbuf.slex_slot <- -1;
   memorize lexbuf
 
@@ -92,6 +94,11 @@ let backtrack lexbuf =
 let lexeme lexbuf =
   List.rev lexbuf.slex_lexeme
 
+let sub_lexeme (lft, rgt) lexbuf =
+  let map i = if i >= 0 then i else -(i + 1) in
+  lexbuf.slex_lexeme |> CCList.drop (map rgt) |>
+  List.rev |> CCList.drop (map lft)
+
 let fill_lexbuf lexbuf oldlexbuf =
   let open Lexing in
   oldlexbuf.lex_start_p <- lexbuf.slex_start_p;
@@ -118,3 +125,14 @@ let encode ?normalize uchars =
   | Some form ->
     uunf_normalize form uchars
 
+let utf8_lexeme ?normalize lexbuf =
+  encode ?normalize (lexeme lexbuf)
+
+let utf8_sub_lexeme ?normalize range lexbuf =
+  encode ?normalize (sub_lexeme range lexbuf)
+
+let location lexbuf =
+  Location.{
+    loc_ghost = false;
+    loc_start = lexbuf.slex_start_p;
+    loc_end   = lexbuf.slex_curr_p; }
