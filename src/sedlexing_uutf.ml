@@ -39,7 +39,11 @@ let decoder kind input =
       end;
       gen ()
     | `Malformed bytes -> (* The input is malformed. *)
-      raise (Invalid_argument "malformed") (* TODO *)
+      (* Return U+FFFD, it will be handled by the lexer. *)
+      if kind = `Batch then
+        Some (1, Uutf.u_rep)
+      else
+        Some (String.length bytes, Uutf.u_rep)
   in
   gen
 

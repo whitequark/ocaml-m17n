@@ -69,6 +69,7 @@ let keyword_table =
 
 type error =
 | Illegal_character of int
+| Invalid_UTF_8
 
 exception Error of error * Location.t
 
@@ -83,6 +84,8 @@ let report_error ppf =
   function
   | Illegal_character u ->
     Format.fprintf ppf "Illegal character (%s)" (escape_unicode u)
+  | Invalid_UTF_8 ->
+    Format.fprintf ppf "Invalid UTF-8"
 
 let () =
   Location.register_error_of_exn
@@ -301,21 +304,23 @@ let rec token ({ lexbuf } as state) =
   | "-." -> MINUSDOT
 
   | "!", Plus symbolchar ->
-    PREFIXOP(Sedlexing.utf8_lexeme lexbuf)
+    PREFIXOP (Sedlexing.utf8_lexeme lexbuf)
   | Chars "~?", Plus symbolchar ->
-    PREFIXOP(Sedlexing.utf8_lexeme lexbuf)
+    PREFIXOP (Sedlexing.utf8_lexeme lexbuf)
   | Chars "=<>|&$", Star symbolchar ->
-    INFIXOP0(Sedlexing.utf8_lexeme lexbuf)
+    INFIXOP0 (Sedlexing.utf8_lexeme lexbuf)
   | Chars "@^", Star symbolchar ->
-    INFIXOP1(Sedlexing.utf8_lexeme lexbuf)
+    INFIXOP1 (Sedlexing.utf8_lexeme lexbuf)
   | Chars "+-", Star symbolchar ->
-    INFIXOP2(Sedlexing.utf8_lexeme lexbuf)
+    INFIXOP2 (Sedlexing.utf8_lexeme lexbuf)
   | "**", Star symbolchar ->
-    INFIXOP4(Sedlexing.utf8_lexeme lexbuf)
+    INFIXOP4 (Sedlexing.utf8_lexeme lexbuf)
   | '%' -> PERCENT
   | Chars "*/%", Star symbolchar ->
-    INFIXOP3(Sedlexing.utf8_lexeme lexbuf)
+    INFIXOP3 (Sedlexing.utf8_lexeme lexbuf)
   | eof -> EOF
+  | 0xfffd ->
+    raise (Error (Invalid_UTF_8, Sedlexing.location lexbuf))
   | any ->
     raise (Error (Illegal_character (List.hd (Sedlexing.lexeme lexbuf)),
                   Sedlexing.location lexbuf))
