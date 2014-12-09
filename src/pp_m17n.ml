@@ -17,10 +17,19 @@ let () =
   in
   let lexbuf = Sedlexing_uutf.create ~filename input in
   try
-    let ast = wrap_parser Parser.implementation lexbuf in
-    output_string stdout Config.ast_impl_magic_number;
-    output_value  stdout filename;
-    output_value  stdout ast
+    if Filename.check_suffix filename ".mli" then
+      let ast = wrap_parser Parser.interface lexbuf in
+      output_string stdout Config.ast_intf_magic_number;
+      output_value  stdout filename;
+      output_value  stdout ast
+    else if Filename.check_suffix filename ".ml" then
+      let ast = wrap_parser Parser.implementation lexbuf in
+      output_string stdout Config.ast_impl_magic_number;
+      output_value  stdout filename;
+      output_value  stdout ast
+    else
+      (prerr_string ("Don't know what to do with " ^ filename ^ ".");
+       exit 1)
   with exn ->
     Location.report_exception Format.err_formatter exn;
     exit 1
