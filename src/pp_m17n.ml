@@ -18,7 +18,9 @@ let () =
   let lexbuf = Sedlexing_uutf.create ~filename input in
   try
     let ast = wrap_parser Parser.implementation lexbuf in
-    ignore ast
+    output_string stdout Config.ast_impl_magic_number;
+    output_value  stdout filename;
+    output_value  stdout ast
   with exn ->
     Location.report_exception Format.err_formatter exn;
     exit 1
