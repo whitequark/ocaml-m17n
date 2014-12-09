@@ -11,5 +11,9 @@ let () = dispatch (
       S[A"-pp"; A"src/pp_m17n.byte"];
     flag ["ocaml"; "ocamldep"; "pp_native"; "m17n"] &
       S[A"-pp"; A"src/pp_m17n.native"];
+    flag ["ocaml"; "pp"; "pp_byte"; "m17n"] &
+      A"src/pp_m17n.byte";
+    flag ["ocaml"; "pp"; "pp_native"; "m17n"] &
+      A"src/pp_m17n.native";
 
   | _ -> ())

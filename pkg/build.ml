@@ -4,7 +4,8 @@
 
 let () =
   let oc = open_out "src_test/_tags" in
-  output_string oc (if Env.native then "<*.ml>: pp_native" else "<*.ml>: pp_byte");
+  output_string oc (if Env.native then "true: pp_native\n" else "true: pp_byte\n");
+  output_string oc {|"ru": include|};
   close_out oc
 
 let () =

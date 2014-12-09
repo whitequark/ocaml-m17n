@@ -18,13 +18,14 @@ build-test: [
   "ocamlbuild" "-classic-display" "-use-ocamlfind" "src_test/test_m17n.byte" "--"
 ]
 depends: [
-  "ocamlfind"  {build}
+  "ocamlfind" {build}
   "sedlex"
   "uutf"
   "uunf"
   "uucp"
   "gen"
   "containers"
-  "ounit"      {test}
+  "ounit"        {test}
+  "ppx_deriving" {test}
 ]
 available: [ ocaml-version >= "4.02.0" ]
