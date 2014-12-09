@@ -121,7 +121,7 @@ let create lexbuf =
   { lexbuf }
 
 let get_label_name lexbuf =
-  let name = Sedlexing.utf8_sub_lexeme (1, -2) lexbuf in
+  let name = Sedlexing.utf8_sub_lexeme ~normalize:`NFC (1, -2) lexbuf in
   if Hashtbl.mem keyword_table name then
     raise (Lexer.Error (Lexer.Keyword_as_label name, Sedlexing.location lexbuf));
   name
@@ -150,11 +150,11 @@ let rec token ({ lexbuf } as state) =
   | '?', lowercase, Star identchar, ':' ->
     OPTLABEL (get_label_name lexbuf)
   | lowercase, Star identchar ->
-    let str = Sedlexing.utf8_lexeme lexbuf in
+    let str = Sedlexing.utf8_lexeme ~normalize:`NFC lexbuf in
     (try Hashtbl.find keyword_table str
      with Not_found -> LIDENT str)
   | uppercase, Star identchar ->
-    UIDENT (Sedlexing.utf8_lexeme ~normalize:`NFD lexbuf)
+    UIDENT (Sedlexing.utf8_lexeme ~normalize:`NFC lexbuf)
   | int_literal ->
     begin try
       INT (convert_int_literal (Sedlexing.utf8_lexeme lexbuf))
