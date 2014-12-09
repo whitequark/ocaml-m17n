@@ -10,17 +10,26 @@ type lexbuf = {
   mutable slex_mem_lexeme : int list;
 }
 
+let uchar_len u =
+  let buf  = Bytes.create 5 in
+  let uutf = Uutf.encoder `UTF_8 `Manual in
+  Uutf.Manual.dst uutf (Bytes.unsafe_to_string buf) 0 5;
+  assert (`Ok = Uutf.encode uutf (`Uchar u));
+  Bytes.length buf - (Uutf.Manual.dst_rem uutf)
+
 (* Process a `string gen` and return an `(int, uchar) gen`, iterating
    decoded Unicode characters, together with their lengths in
    the UTF-8 *byte* representation. *)
-let decoder input =
-  let uutf = Uutf.decoder ~nln:(`ASCII 0x000A) ~encoding:`UTF_8 `Manual
-  and pos  = ref 0 in
+let decoder kind input =
+  let uutf = Uutf.decoder ~nln:(`ASCII 0x000A) ~encoding:`UTF_8 `Manual in
   let rec gen () =
     match Uutf.decode uutf with
     | `End -> None
     | `Uchar u ->
-      Some (Uutf.decoder_count uutf - !pos, u)
+      if kind = `Batch then
+        Some (1, u)
+      else
+        Some (uchar_len u, u) (* TODO *)
     | `Await -> (* We exhausted the buffer. *)
       begin match input () with
       | None -> (* We exhausted the input. *)
@@ -34,13 +43,13 @@ let decoder input =
   in
   gen
 
-let create ?(filename="//unknown//") input =
+let create ?(kind=`Batch) ?(filename="//unknown//") input =
   let pos = Lexing.{
     pos_fname = filename;
     pos_lnum  = 1;
     pos_bol   = 0;
     pos_cnum  = 0; } in
-  let restart = Gen.persistent_lazy (decoder input) in
+  let restart = Gen.persistent_lazy (decoder kind input) in
   { slex_start_p    = pos;
     slex_curr       = Gen.start restart;
     slex_curr_p     = pos;
@@ -72,8 +81,8 @@ let next lexbuf =
     if uchar = 0x000A then
       lexbuf.slex_curr_p <- { pos with
         pos_lnum = pos.pos_lnum + 1;
-        pos_cnum = 0;
-        pos_bol  = pos.pos_bol + pos.pos_cnum + len; }
+        pos_cnum = pos.pos_cnum + len;
+        pos_bol  = pos.pos_cnum + len; }
     else
       lexbuf.slex_curr_p <- { pos with
         pos_cnum = pos.pos_cnum + len; };
