@@ -99,29 +99,6 @@ let () =
       Some (Location.error_of_printer loc report_error err)
     | _ -> None)
 
-let blank = [%sedlex.regexp? Chars " \t\012" | 0x3000 (* IDEOGRAPHIC SPACE *)]
-let uppercase = [%sedlex.regexp? lu ]
-let lowercase = [%sedlex.regexp? ll | lm | lo | lt | '_' ]
-let identchar = [%sedlex.regexp? uppercase | lowercase | nd | nl | no | "'" ]
-let symbolchar =
-  [%sedlex.regexp? Chars "!$%&*+-./:<=>?@^|~" ]
-let decimal_literal =
-  [%sedlex.regexp? '0'..'9', Star ('0'..'9' | '_') ]
-let hex_literal =
-  [%sedlex.regexp? '0', Chars "xX", ('0'..'9' | 'A'..'F' | 'a'..'f'),
-                                    Star ('0'..'9' | 'A'..'F' | 'a'..'f' | '_') ]
-let oct_literal =
-  [%sedlex.regexp? '0', Chars "oO", '0'..'7', Star ('0'..'7' | '_') ]
-let bin_literal =
-  [%sedlex.regexp? '0', Chars "bB", '0'..'1', Star ('0'..'1' | '_') ]
-let int_literal =
-  [%sedlex.regexp? decimal_literal | hex_literal | oct_literal | bin_literal ]
-let float_literal =
-  [%sedlex.regexp? '0'..'9', Star ('0'..'9' | '_'),
-                   Opt ('.', Star ('0'..'9' | '_')),
-                   Opt (Chars "eE", Opt (Chars "+-"), '0'..'9',
-                        Star ('0'..'9' | '_')) ]
-
 type state = {
           lexbuf        : Sedlexing.lexbuf;
           buffer        : Buffer.t;
@@ -204,6 +181,29 @@ let with_string ({ lexbuf } as state) fn =
     state.in_string <- false;
     raise (Lexer.Error (Lexer.Unterminated_string, string_start_loc))
 
+let blank = [%sedlex.regexp? Chars " \t\012" | 0x3000 (* IDEOGRAPHIC SPACE *)]
+let uppercase = [%sedlex.regexp? lu ]
+let lowercase = [%sedlex.regexp? ll | lm | lo | lt | '_' ]
+let identchar = [%sedlex.regexp? id_continue | "'" ]
+let symbolchar =
+  [%sedlex.regexp? Chars "!$%&*+-./:<=>?@^|~" ]
+let decimal_literal =
+  [%sedlex.regexp? '0'..'9', Star ('0'..'9' | '_') ]
+let hex_literal =
+  [%sedlex.regexp? '0', Chars "xX", ('0'..'9' | 'A'..'F' | 'a'..'f'),
+                                    Star ('0'..'9' | 'A'..'F' | 'a'..'f' | '_') ]
+let oct_literal =
+  [%sedlex.regexp? '0', Chars "oO", '0'..'7', Star ('0'..'7' | '_') ]
+let bin_literal =
+  [%sedlex.regexp? '0', Chars "bB", '0'..'1', Star ('0'..'1' | '_') ]
+let int_literal =
+  [%sedlex.regexp? decimal_literal | hex_literal | oct_literal | bin_literal ]
+let float_literal =
+  [%sedlex.regexp? '0'..'9', Star ('0'..'9' | '_'),
+                   Opt ('.', Star ('0'..'9' | '_')),
+                   Opt (Chars "eE", Opt (Chars "+-"), '0'..'9',
+                        Star ('0'..'9' | '_')) ]
+
 let rec token ({ lexbuf } as state) =
   match%sedlex lexbuf with
   | "\\\n" ->
@@ -212,6 +212,8 @@ let rec token ({ lexbuf } as state) =
   | '\n' | '\t' | ' ' -> token state
   | '_' -> UNDERSCORE
   | '~' -> TILDE
+  | uppercase, Star identchar ->
+    UIDENT (Sedlexing.utf8_lexeme ~normalize:`NFC lexbuf)
   | '~', lowercase, Star identchar, ':' ->
     LABEL (get_label_name lexbuf)
   | '?' -> QUESTION
@@ -221,8 +223,6 @@ let rec token ({ lexbuf } as state) =
     let str = Sedlexing.utf8_lexeme ~normalize:`NFC lexbuf in
     (try Hashtbl.find keyword_table str
      with Not_found -> LIDENT str)
-  | uppercase, Star identchar ->
-    UIDENT (Sedlexing.utf8_lexeme ~normalize:`NFC lexbuf)
   | int_literal ->
     begin try
       INT (convert_int_literal (Sedlexing.utf8_lexeme lexbuf))
