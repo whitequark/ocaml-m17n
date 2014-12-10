@@ -6,7 +6,16 @@ let wrap_parser fn lexbuf =
   ast
 
 let () =
-  let filename = Sys.argv.(1) in
+  let filename =
+    let filename = ref "" in
+    Arg.parse [
+        "-I", Arg.String ignore, "ignored";
+        "-ignore", Arg.Unit ignore, "ignored";
+      ]
+      (fun arg -> filename := arg)
+      "OCaml Multilingualization preprocessor";
+    !filename
+  in
   let chan = open_in filename in
   let input =
     let buf = Bytes.create 4096 in
@@ -30,6 +39,10 @@ let () =
     else
       (prerr_string ("Don't know what to do with " ^ filename ^ ".");
        exit 1)
-  with exn ->
+  with
+  | Parsing.Parse_error | Syntaxerr.Escape_error ->
+    let exn = Syntaxerr.Error (Syntaxerr.Other (Sedlexing_uutf.location lexbuf)) in
+    Location.report_exception Format.err_formatter exn;
+  | exn ->
     Location.report_exception Format.err_formatter exn;
     exit 1

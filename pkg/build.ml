@@ -11,7 +11,7 @@ let () =
 let () =
   Pkg.describe "m17n" ~builder:`OCamlbuild [
     Pkg.lib "pkg/META";
-    Pkg.bin ~auto:true "src/pp_m17n" ~dst:"../lib/m17n/pp_m17n";
+    Pkg.bin ~auto:true "src/pp_m17n" ~dst:"ocamlm17n";
     Pkg.doc "README.md";
     Pkg.doc "LICENSE.txt";
     Pkg.doc "CHANGELOG.md"; ]
