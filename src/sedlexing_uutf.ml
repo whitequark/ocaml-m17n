@@ -111,9 +111,15 @@ let lexeme_char n lexbuf =
   List.nth (lexeme lexbuf) n
 
 let sub_lexeme (lft, rgt) lexbuf =
+  let rec drop i =
+    function
+    | x::lst when i > 0 -> drop (i-1) lst
+    | [] when i > 0 -> assert false
+    | lst -> lst
+  in
   let map i = if i >= 0 then i else -(i + 1) in
-  lexbuf.slex_lexeme |> CCList.drop (map rgt) |>
-  List.rev |> CCList.drop (map lft)
+  lexbuf.slex_lexeme |> drop (map rgt) |>
+  List.rev |> drop (map lft)
 
 let fill_lexbuf lexbuf oldlexbuf =
   let open Lexing in

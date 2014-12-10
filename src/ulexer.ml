@@ -482,9 +482,10 @@ and skip_sharp_bang { lexbuf } =
   | "#!", Star (Compl '\n'), '\n' -> ()
   | _ -> ()
 
-type position' = [%import: Lexing.position] [@@deriving show]
+(* type position' = [%import: Lexing.position] [@@deriving show]
 type location' = [%import: Location.t [@with Lexing.position := position']] [@@deriving show]
 type token' = [%import: Parser.token [@with Location.t := location']] [@@deriving show]
+ *)
 
 let wrap fn =
   fun state oldlexbuf ->

@@ -24,7 +24,6 @@ depends: [
   "uunf"
   "uucp"
   "gen"
-  "containers"
   "ounit"        {test}
   "ppx_deriving" {test}
 ]
