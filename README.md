@@ -163,7 +163,7 @@ use the same form. Different operating systems handle them in different ways:
     somewhat [more complex][winfn] interpretation. It performs its own
     case folding (in most cases; case-sensitive Windows filesystems
     [exist][wincs]), but no normalization. Its input methods normalize to
-    [NFC][] as well.
+    [NFC][nf] as well.
 
 _m17n_ aims to reduce possible confusion by looking into the include
 directories and looking for any OCaml build products whose basenames are
@@ -190,7 +190,7 @@ reimplementing the parser in a custom frontend.
 
 The compiler treats the identifiers as opaque tokens almost everywhere.
 It does not even concatenate them, which is important, as [NFC][nf]
-[is not generally closed under concatenation][nfcnotclosed]. The only place
+[is not generally closed under concatenation][nfnotclosed]. The only place
 where the compiler actually dissects the strings is the module name → filename
 mapping. However, it ignores bytes with values over 127, passing UTF-8
 strings through.
