@@ -50,3 +50,7 @@ val fill_lexbuf : lexbuf -> Lexing.lexbuf -> unit
 (** [location lexbuf] returns a [Location.t], corresponding to
     the current lexeme in [lexbuf]. *)
 val location : lexbuf -> Location.t
+
+(** [unshift lexbuf] rolls [lexbuf] one character back, but not further than
+    the start of the current lexeme. Only works for non-newline ASCII characters. *)
+val unshift : lexbuf -> unit

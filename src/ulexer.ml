@@ -123,18 +123,19 @@ let float_literal =
                         Star ('0'..'9' | '_')) ]
 
 type state = {
-          lexbuf     : Sedlexing.lexbuf;
-          string_buf : Buffer.t;
-  mutable in_string  : bool;
+          lexbuf        : Sedlexing.lexbuf;
+          buffer        : Buffer.t;
+  mutable in_string     : bool;
+  mutable comment_start : Location.t list;
 }
 
 let create lexbuf =
   { lexbuf;
-    string_buf = Buffer.create 16;
-    in_string  = false; }
+    buffer = Buffer.create 16;
+    in_string = false;
+    comment_start = []; }
 
-let in_comment state =
-  false
+let in_comment { comment_start } = comment_start = []
 
 let get_label_name lexbuf =
   let name = Sedlexing.utf8_sub_lexeme ~normalize:`NFC (1, -2) lexbuf in
@@ -192,15 +193,16 @@ let convert_nativeint_literal s =
   Nativeint.neg (Nativeint.of_string ("-" ^ String.sub s 0 (String.length s - 1)))
 
 let with_string ({ lexbuf } as state) fn =
-  Buffer.clear state.string_buf;
+  Buffer.clear state.buffer;
   let string_start_loc = Sedlexing.location lexbuf in
   try
     state.in_string <- true;
     Sedlexing.expand_token lexbuf (fun () -> fn state);
     state.in_string <- false;
-    Buffer.contents state.string_buf
+    Buffer.contents state.buffer
   with Unterminated ->
-     raise (Lexer.Error (Lexer.Unterminated_string, string_start_loc))
+    state.in_string <- false;
+    raise (Lexer.Error (Lexer.Unterminated_string, string_start_loc))
 
 let rec token ({ lexbuf } as state) =
   match%sedlex lexbuf with
@@ -250,8 +252,8 @@ let rec token ({ lexbuf } as state) =
   | '"' ->
     STRING (with_string state string, None)
   | '{', Star lowercase, '|' ->
-    let delim = Sedlexing.utf8_sub_lexeme (1, -2) lexbuf in
-    STRING (with_string state (quoted_string delim), Some delim)
+    let delim = Sedlexing.utf8_sub_lexeme ~normalize:`NFC (1, -2) lexbuf in
+    STRING (with_string state (delimited_string delim), Some delim)
   | "'\n'" -> CHAR '\n'
   | "'", Compl ('\\' | '\''), "'" ->
     CHAR (char_for_uchar 1 lexbuf)
@@ -265,36 +267,21 @@ let rec token ({ lexbuf } as state) =
   | '\\', any ->
     raise (Lexer.Error (Lexer.Illegal_escape (Sedlexing.utf8_sub_lexeme (1, 0) lexbuf),
                         Sedlexing.location lexbuf))
-  (*
-  | "( *"
-      { let start_loc = Location.curr lexbuf  in
-        comment_start_loc := [start_loc];
-        reset_string_buffer ();
-        let end_loc = comment lexbuf in
-        let s = get_stored_string () in
-        reset_string_buffer ();
-        COMMENT (s, { start_loc with
-                      Location.loc_end = end_loc.Location.loc_end })
-      }
-  | "( * )"
-      { let loc = Location.curr lexbuf  in
-        if !print_warnings then
-          Location.prerr_warning loc Warnings.Comment_start;
-        comment_start_loc := [loc];
-        reset_string_buffer ();
-        let end_loc = comment lexbuf in
-        let s = get_stored_string () in
-        reset_string_buffer ();
-        COMMENT (s, { loc with Location.loc_end = end_loc.Location.loc_end })
-      }
-  | "* )"
-      { let loc = Location.curr lexbuf in
-        Location.prerr_warning loc Warnings.Comment_not_end;
-        lexbuf.Lexing.lex_curr_pos <- lexbuf.Lexing.lex_curr_pos - 1;
-        let curpos = lexbuf.lex_curr_p in
-        lexbuf.lex_curr_p <- { curpos with pos_cnum = curpos.pos_cnum - 1 };
-        STAR
-      }
+  | "(*" ->
+    state.comment_start <- [Sedlexing.location lexbuf];
+    comment state
+  | "(*)" ->
+    let loc = Sedlexing.location lexbuf in
+    if !Lexer.print_warnings then
+      Location.prerr_warning loc Warnings.Comment_start;
+    state.comment_start <- [loc];
+    comment state
+  | "*)" ->
+    let loc = Sedlexing.location lexbuf in
+    Location.prerr_warning loc Warnings.Comment_not_end;
+    Sedlexing.unshift lexbuf;
+    STAR
+    (*
   | "#" [' ' '\t']* (['0'-'9']+ as num) [' ' '\t']*
         ("\"" ([^ '\010' '\013' '"' ] * as name) "\"")?
         [^ '\010' '\013'] * newline
@@ -372,23 +359,65 @@ let rec token ({ lexbuf } as state) =
                   Sedlexing.location lexbuf))
   | _ -> assert false (* https://github.com/alainfrisch/sedlex/issues/16 *)
 
-and string ({ lexbuf; string_buf } as state) =
+(* Note that COMMENT token is never emitted, as it is not actually used
+   by the parser (or any tools for that matter). *)
+and comment ({ lexbuf } as state) =
+  let unterminated_string str_start =
+    match state.comment_start with
+    | [] -> assert false
+    | loc :: _ ->
+      let start = List.hd (List.rev state.comment_start) in
+      state.comment_start <- [];
+      raise (Lexer.Error (Lexer.Unterminated_string_in_comment (start, str_start),
+                          loc))
+  in
+  match%sedlex lexbuf with
+  | "(*" ->
+    state.comment_start <- (Sedlexing.location lexbuf) :: state.comment_start;
+    comment state
+  | "*)" ->
+    begin match state.comment_start with
+    | [] -> assert false
+    | [_] -> state.comment_start <- []; token state
+    | _ :: l -> state.comment_start <- l; comment state
+    end
+  | "\"" ->
+    let str_start = Sedlexing.location lexbuf in
+    (try string state with Unterminated -> unterminated_string str_start);
+    comment state
+  | '{', Star lowercase, '|' ->
+    let delim = Sedlexing.utf8_sub_lexeme ~normalize:`NFC (1, -2) lexbuf
+    and str_start = Sedlexing.location lexbuf in
+    (try delimited_string delim state with Unterminated -> unterminated_string str_start);
+    comment state
+  | eof ->
+    begin match state.comment_start with
+    | [] -> assert false
+    | loc :: _ ->
+      let start = List.hd (List.rev state.comment_start) in
+      state.comment_start <- [];
+      raise (Lexer.Error (Lexer.Unterminated_comment start, loc))
+    end
+  | any -> comment state
+  | _ -> assert false
+
+and string ({ lexbuf; buffer } as state) =
   match%sedlex lexbuf with
   | '"' -> ()
   | "\\\n", Star zs -> string state
   | "'", Compl ('\\' | '\''), "'" ->
-    Buffer.add_char string_buf (char_for_uchar 1 lexbuf)
+    Buffer.add_char buffer (char_for_uchar 1 lexbuf)
   | "'\\", Chars "\\'\"ntbr ", "'" ->
-    Buffer.add_char string_buf (char_for_backslash 2 lexbuf)
+    Buffer.add_char buffer (char_for_backslash 2 lexbuf)
   | "'\\", '0'..'9', '0'..'9', '0'..'9', "'" ->
     begin try
-      Buffer.add_char string_buf (char_for_decimal_code 2 lexbuf)
+      Buffer.add_char buffer (char_for_decimal_code 2 lexbuf)
     with Lexer.Error (Lexer.Illegal_escape _, _) ->
       ()
     end
   | "'\\x", ('0'..'9' | 'a'..'f' | 'A'..'F'),
             ('0'..'9' | 'a'..'f' | 'A'..'F'), "'" ->
-    Buffer.add_char string_buf (char_for_hexadecimal_code 3 lexbuf )
+    Buffer.add_char buffer (char_for_hexadecimal_code 3 lexbuf )
   | '\\', any ->
     if in_comment state then
       string state
@@ -398,33 +427,39 @@ and string ({ lexbuf; string_buf } as state) =
   | '\n' ->
     if not (in_comment state) then
       Location.prerr_warning (Sedlexing.location lexbuf) Warnings.Eol_in_string;
-    Buffer.add_char string_buf '\n';
+    Buffer.add_char buffer '\n';
     string state
   | eof ->
     raise Unterminated
   | any ->
-    Buffer.add_string string_buf (Sedlexing.utf8_lexeme lexbuf);
+    Buffer.add_string buffer (Sedlexing.utf8_lexeme lexbuf);
     string state
   | _ -> assert false
 
-and quoted_string delim ({ lexbuf; string_buf } as state) =
+and delimited_string delim ({ lexbuf; buffer } as state) =
   match%sedlex lexbuf with
   | '\n' ->
-    Buffer.add_char string_buf '\n';
-    quoted_string delim state
+    Buffer.add_char buffer '\n';
+    delimited_string delim state
   | eof ->
     raise Unterminated
   | "|", Star lowercase, "}" ->
-    let edelim = Sedlexing.utf8_sub_lexeme (1, -2) lexbuf in
+    let edelim = Sedlexing.utf8_sub_lexeme ~normalize:`NFC (1, -2) lexbuf in
     if delim = edelim then ()
     else begin
-      Buffer.add_string string_buf (Sedlexing.utf8_lexeme lexbuf);
-      quoted_string delim state
+      Buffer.add_string buffer (Sedlexing.utf8_lexeme lexbuf);
+      delimited_string delim state
     end
   | any ->
-    Buffer.add_string string_buf (Sedlexing.utf8_lexeme lexbuf);
-    quoted_string delim state
+    Buffer.add_string buffer (Sedlexing.utf8_lexeme lexbuf);
+    delimited_string delim state
   | _ -> assert false
+
+and skip_sharp_bang { lexbuf } =
+  match%sedlex lexbuf with
+  | "#!", Star (Compl '\n'), '\n', Star (Compl '\n'), "\n!#\n" -> ()
+  | "#!", Star (Compl '\n'), '\n' -> ()
+  | _ -> ()
 
 type position' = [%import: Lexing.position] [@@deriving show]
 type location' = [%import: Location.t [@with Lexing.position := position']] [@@deriving show]

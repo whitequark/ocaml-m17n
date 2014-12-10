@@ -158,3 +158,14 @@ let location lexbuf =
     loc_ghost = false;
     loc_start = lexbuf.slex_start_p;
     loc_end   = lexbuf.slex_curr_p; }
+
+let unshift lexbuf =
+  let open Lexing in
+  match lexbuf.slex_lexeme with
+  | [] -> assert false
+  | uchar :: lexeme ->
+    assert (uchar <> 0x000A && uchar < 0x0100);
+    lexbuf.slex_curr <- Gen.append (Gen.singleton (1, uchar)) lexbuf.slex_curr;
+    lexbuf.slex_curr_p <- { lexbuf.slex_curr_p with
+      pos_cnum = lexbuf.slex_curr_p.pos_cnum - 1; };
+    lexbuf.slex_lexeme <- lexeme
