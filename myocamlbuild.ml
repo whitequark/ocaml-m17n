@@ -16,4 +16,7 @@ let () = dispatch (
     flag ["ocaml"; "pp"; "pp_native"; "m17n"] &
       A"src/pp_m17n.native";
 
+    flag ["ocaml"; "link"; "linkpkg"] & A"-linkpkg";
+    pflag ["ocaml"; "link"] "dontlink" (fun pkg -> S[A"-dontlink"; A pkg]);
+
   | _ -> ())

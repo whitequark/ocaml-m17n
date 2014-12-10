@@ -1,6 +1,7 @@
 true: warn(@5@8@10@11@12@14@23@24@26@29@40), bin_annot, safe_string
 
 "src": include
-<src/*.{ml,mli,byte,native}>: package(compiler-libs.common), package(gen), package(uutf), package(uunf), package(uucp), package(sedlex), package(containers), package(ppx_import), package(ppx_deriving.std)
+<src/*>: package(compiler-libs.common), package(gen), package(uutf), package(uunf), package(uucp), package(sedlex), package(containers), package(ppx_import), package(ppx_deriving.std)
+<src/m17ntop.cma>: linkpkg, dontlink(compiler-libs.common)
 
-<src_test/*.{ml,mli,byte,native}>|<src_test/**/*.{ml,mli}>: debug, m17n, package(oUnit), package(ppx_import), package(ppx_deriving.std)
+<src_test/*>|<src_test/**/*>: debug, m17n, package(oUnit), package(ppx_import), package(ppx_deriving.std)
