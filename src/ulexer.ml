@@ -114,6 +114,14 @@ let create lexbuf =
 
 let in_comment { comment_start } = comment_start = []
 
+(* This is necessary, as our approximation for lowercase includes
+   extra characters not present in ID_Start, and we conform to ID_Start.
+   See https://github.com/alainfrisch/sedlex/issues/20 *)
+let check_id_start offset lexbuf =
+  let id_char = List.nth (Sedlexing.lexeme lexbuf) offset in
+  if not (Uucp.Id.is_id_start id_char) then
+    raise (Error (Illegal_character id_char, Sedlexing.location lexbuf))
+
 let get_label_name lexbuf =
   let name = Sedlexing.utf8_sub_lexeme ~normalize:`NFC (1, -2) lexbuf in
   if Hashtbl.mem keyword_table name then
@@ -215,11 +223,14 @@ let rec token ({ lexbuf } as state) =
   | uppercase, Star identchar ->
     UIDENT (Sedlexing.utf8_lexeme ~normalize:`NFC lexbuf)
   | '~', lowercase, Star identchar, ':' ->
+    check_id_start 1 lexbuf;
     LABEL (get_label_name lexbuf)
   | '?' -> QUESTION
   | '?', lowercase, Star identchar, ':' ->
+    check_id_start 1 lexbuf;
     OPTLABEL (get_label_name lexbuf)
   | lowercase, Star identchar ->
+    check_id_start 0 lexbuf;
     let str = Sedlexing.utf8_lexeme ~normalize:`NFC lexbuf in
     (try Hashtbl.find keyword_table str
      with Not_found -> LIDENT str)

@@ -128,8 +128,8 @@ _m17n_ includes only five changes to the OCaml lexer:
     as an uppercase letter. If it is possible to fold the letter to upper case,
     this is done.
 
-To summarize, an identifier may start with [ID_Start][d1] or U+2E2F VERTICAL TILDE,
-and continue with [ID_Continue][d1].
+To summarize, an identifier may start with [ID_Start][d1], and continue
+with [ID_Continue][d1].
 
 All identifiers are normalized to [NFC][nf]. However, strings are not normalized.
 
