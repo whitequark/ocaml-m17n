@@ -51,6 +51,10 @@ val fill_lexbuf : lexbuf -> Lexing.lexbuf -> unit
     the current lexeme in [lexbuf]. *)
 val location : lexbuf -> Location.t
 
+(** [set_position lexbuf filename line] sets the location information for
+    the current position to file [filename], line [line]. Column is not changed. *)
+val set_position : lexbuf -> string -> int -> unit
+
 (** [unshift lexbuf] rolls [lexbuf] one character back, but not further than
     the start of the current lexeme. Only works for non-newline ASCII characters. *)
 val unshift : lexbuf -> unit

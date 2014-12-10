@@ -281,13 +281,13 @@ let rec token ({ lexbuf } as state) =
     Location.prerr_warning loc Warnings.Comment_not_end;
     Sedlexing.unshift lexbuf;
     STAR
-    (*
-  | "#" [' ' '\t']* (['0'-'9']+ as num) [' ' '\t']*
-        ("\"" ([^ '\010' '\013' '"' ] * as name) "\"")?
-        [^ '\010' '\013'] * newline
-      { update_loc lexbuf name (int_of_string num) true 0;
-        token lexbuf
-      }*)
+  | "#", Star (Chars " \t"), Plus ('0'..'9'),
+         Star (Chars " \t"), '"', Star (Compl ('"' | '\n')), '"',
+         Star (Compl '\n'), '\n' ->
+    let lexeme = Sedlexing.utf8_lexeme lexbuf in
+    Scanf.sscanf lexeme "# %d \"%s@\"\"" (fun line file ->
+      Sedlexing.set_position lexbuf file line);
+    token state
   | "#"  -> SHARP
   | "&"  -> AMPERSAND
   | "&&" -> AMPERAMPER

@@ -159,6 +159,12 @@ let location lexbuf =
     loc_start = lexbuf.slex_start_p;
     loc_end   = lexbuf.slex_curr_p; }
 
+let set_position lexbuf file line =
+  let open Lexing in
+  lexbuf.slex_start_p <- { lexbuf.slex_start_p with
+    pos_fname = file;
+    pos_lnum  = line; }
+
 let unshift lexbuf =
   let open Lexing in
   match lexbuf.slex_lexeme with
