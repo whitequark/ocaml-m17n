@@ -116,8 +116,9 @@ Technical details
 
 _m17n_ includes only five changes to the OCaml lexer:
 
-  * U+0009 CHARACTER TABULATION, U+000C FORM FEED (FF),
-    U+0020 SPACE and U+3000 IDEOGRAPHIC SPACE are recognized as whitespace,
+  * U+0009 CHARACTER TABULATION, U+000A LINE FEED (LF), U+000D CARRIAGE RETURN (CR),
+    U+000C FORM FEED (FF), U+0020 SPACE and U+3000 IDEOGRAPHIC SPACE are
+    recognized as whitespace,
   * Characters of [General Category][gc] [Lu][gcv] are recognized as uppercase letters
     at the start of an identifier,
   * Characters of [General Categories][gc] [Ll][gcv], [Lm][gcv], [Lo][gcv], [Lt][gcv] and
