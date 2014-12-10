@@ -222,6 +222,16 @@ let rec token ({ lexbuf } as state) =
   | '~' -> TILDE
   | uppercase, Star identchar ->
     UIDENT (Sedlexing.utf8_lexeme ~normalize:`NFC lexbuf)
+  | '@', (uppercase | lowercase), Star identchar ->
+    let first = Sedlexing.lexeme_char 1 lexbuf
+    and rest  = Sedlexing.sub_lexeme (2, -1) lexbuf in
+    let first =
+      match Uucp.Case.Map.to_upper first with
+      | `Self -> first
+      | `Uchars [] -> assert false
+      | `Uchars (mapped :: _) -> mapped
+    in
+    UIDENT (Sedlexing.encode ~normalize:`NFC (first :: rest))
   | '~', lowercase, Star identchar, ':' ->
     check_id_start 1 lexbuf;
     LABEL (get_label_name lexbuf)

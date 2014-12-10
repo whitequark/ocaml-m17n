@@ -1,4 +1,3 @@
-  * sigil @
   * toplevel
   * confusing scripts
   * confusing filesystem

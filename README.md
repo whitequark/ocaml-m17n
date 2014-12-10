@@ -10,7 +10,7 @@ type 色 =
 | @緑色
 [@@deriving show]
 
-let () = print_endline (show_色 赤)
+let () = print_endline (show_色 @赤)
 ```
 
 Installation
