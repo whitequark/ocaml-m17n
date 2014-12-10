@@ -126,7 +126,7 @@ _m17n_ includes only five changes to the OCaml lexer:
   * Characters with property [ID_Continue][d1] are recognized as continuation of
     an identifier,
   * U+0040 COMMERCIAL AT makes the following lowercase or unicase letter recognized
-    as an uppercase letter. If it is possible to fold the letter to upper case,
+    as an uppercase letter. If it is possible to map the letter to upper case,
     this is done.
 
 To summarize, an identifier may start with [ID_Start][d1], and continue
