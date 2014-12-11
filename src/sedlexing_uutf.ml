@@ -1,12 +1,12 @@
 type lexbuf = {
   mutable slex_start_p    : Lexing.position;
-  mutable slex_curr       : (int * Uutf.uchar) Gen.clonable;
+  mutable slex_curr       : (int * Uutf.uchar) GenClone.t;
   mutable slex_curr_g     : (int * Uutf.uchar) Gen.t;
   mutable slex_curr_p     : Lexing.position;
   mutable slex_lexeme     : int list;
 
   mutable slex_slot       : int;
-  mutable slex_mem        : (int * Uutf.uchar) Gen.clonable;
+  mutable slex_mem        : (int * Uutf.uchar) GenClone.t;
   mutable slex_mem_p      : Lexing.position;
   mutable slex_mem_lexeme : int list;
 }
@@ -54,14 +54,11 @@ let create ?(kind=`Batch) ?(filename="//unknown//") input =
     pos_lnum  = 1;
     pos_bol   = 0;
     pos_cnum  = 0; } in
-  let gen =
-    match kind with
-    | `Batch -> Gen.MList.(to_clonable (of_gen_lazy (decoder kind input)))
-    | `Toplevel -> assert false
-  in
+  let gen = GenMList.(to_clonable
+    (of_gen_lazy ~caching:(kind <> `Toplevel) (decoder kind input))) in
   { slex_start_p    = pos;
     slex_curr       = gen;
-    slex_curr_g     = gen#next;
+    slex_curr_g     = gen#gen;
     slex_curr_p     = pos;
     slex_lexeme     = [];
     slex_slot       = -1;
@@ -104,7 +101,7 @@ let mark lexbuf slot =
 let backtrack lexbuf =
   let slot = lexbuf.slex_slot in
   lexbuf.slex_curr <- lexbuf.slex_mem#clone;
-  lexbuf.slex_curr_g <- lexbuf.slex_curr#next;
+  lexbuf.slex_curr_g <- lexbuf.slex_curr#gen;
   lexbuf.slex_curr_p <- lexbuf.slex_mem_p;
   lexbuf.slex_lexeme <- lexbuf.slex_mem_lexeme;
   slot
@@ -176,27 +173,16 @@ let set_position lexbuf file line =
     pos_fname = file;
     pos_lnum  = line; }
 
-let rec gen_prepend elem rest =
-  object
-    val mutable state = `Yield
-    method next () =
-      match state with
-      | `Yield -> state <- `Fwd; Some elem
-      | `Fwd -> rest#next ()
-    method clone =
-      match state with
-      | `Yield -> gen_prepend elem rest#clone
-      | `Fwd -> rest#clone
-  end
-
 let unshift lexbuf =
   let open Lexing in
   match lexbuf.slex_lexeme with
   | [] -> assert false
   | uchar :: lexeme ->
     assert (uchar <> 0x000A && uchar < 0x0100);
-    lexbuf.slex_curr <- gen_prepend (1, uchar) lexbuf.slex_curr;
-    lexbuf.slex_curr_g <- lexbuf.slex_curr#next;
+    let slex_curr = GenClone.to_prependable lexbuf.slex_curr in
+    slex_curr#prepend (1, uchar);
+    lexbuf.slex_curr <- (slex_curr :> (int * Uutf.uchar) GenClone.t);
+    lexbuf.slex_curr_g <- slex_curr#gen;
     lexbuf.slex_curr_p <- { lexbuf.slex_curr_p with
       pos_cnum = lexbuf.slex_curr_p.pos_cnum - 1; };
     lexbuf.slex_lexeme <- lexeme
