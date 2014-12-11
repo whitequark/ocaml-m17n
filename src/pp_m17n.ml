@@ -22,7 +22,7 @@ let () =
     fun () ->
       match input chan buf 0 (Bytes.length buf) with
       | 0 -> None
-      | n -> Some (Bytes.sub_string buf 0 n)
+      | n -> Some (buf, 0, n)
   in
   let lexbuf = Sedlexing_uutf.create ~filename input in
   try

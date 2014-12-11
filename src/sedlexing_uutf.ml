@@ -34,8 +34,8 @@ let decoder kind input =
       begin match input () with
       | None -> (* We exhausted the input. *)
         Uutf.Manual.src uutf "" 0 0
-      | Some chunk -> (* There's some more input. *)
-        Uutf.Manual.src uutf chunk 0 (String.length chunk)
+      | Some (chunk, start, len) -> (* There's some more input. *)
+        Uutf.Manual.src uutf (Bytes.unsafe_to_string chunk) start len
       end;
       gen ()
     | `Malformed bytes -> (* The input is malformed. *)

@@ -16,8 +16,11 @@ val backtrack : lexbuf -> int
     Positions filled with {!fill_lexbuf} will have [filename] as their
     [pos_fname] field.
     If [kind] equals [`Batch] (the default), positions filled with
-    [fill_lexbuf] will refer to characters. If [`Toplevel], to bytes. *)
-val create : ?kind:[`Batch|`Toplevel] -> ?filename:string -> string Gen.t -> lexbuf
+    [fill_lexbuf] will refer to characters. If [`Toplevel], to bytes.
+    Additionally, with [kind = `Toplevel], [gen] will never be called
+    speculatively. *)
+val create : ?kind:[`Batch|`Toplevel] -> ?filename:string ->
+             (bytes * int * int) Gen.t -> lexbuf
 
 (** [lexeme lexbuf] returns the list of codepoints comprising
     the current lexeme. *)
