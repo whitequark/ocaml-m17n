@@ -13,6 +13,7 @@ let () =
     Pkg.lib "pkg/META";
     Pkg.lib ~exts:Exts.interface_opt "src/m17n_sedlexing";
     Pkg.lib ~exts:Exts.interface_opt "src/m17n_lexer";
+    Pkg.lib ~exts:Exts.interface_opt "src/m17n_wrap";
     Pkg.lib ~exts:Exts.library "src/m17n";
     Pkg.lib ~exts:[".cmo"] "src/m17n_toploop";
     Pkg.lib ~cond:(Env.bool "utop") ~exts:[".cmo"] "src/m17n_utop";
