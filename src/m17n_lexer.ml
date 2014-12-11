@@ -425,20 +425,20 @@ and comment ({ lexbuf } as state) =
 and string ({ lexbuf; buffer } as state) =
   match%sedlex lexbuf with
   | '"' -> ()
-  | "\\\n", Star zs -> string state
-  | "'", Compl ('\\' | '\''), "'" ->
-    Buffer.add_char buffer (char_for_uchar 1 lexbuf)
-  | "'\\", Chars "\\'\"ntbr ", "'" ->
-    Buffer.add_char buffer (char_for_backslash 2 lexbuf)
-  | "'\\", '0'..'9', '0'..'9', '0'..'9', "'" ->
+  | "\\\n", Star ('\t' | '\n') -> string state
+  | "\\", Chars "\\'\"ntbr ", "'" ->
+    Buffer.add_char buffer (char_for_backslash 1 lexbuf); string state
+  | "\\", '0'..'9', '0'..'9', '0'..'9' ->
     begin try
-      Buffer.add_char buffer (char_for_decimal_code 2 lexbuf)
-    with Lexer.Error (Lexer.Illegal_escape _, _) ->
+      Buffer.add_char buffer (char_for_decimal_code 1 lexbuf)
+    with Lexer.Error (Lexer.Illegal_escape _, _) when in_comment state ->
       ()
-    end
-  | "'\\x", ('0'..'9' | 'a'..'f' | 'A'..'F'),
-            ('0'..'9' | 'a'..'f' | 'A'..'F'), "'" ->
-    Buffer.add_char buffer (char_for_hexadecimal_code 3 lexbuf )
+    end;
+    string state
+  | "\\x", ('0'..'9' | 'a'..'f' | 'A'..'F'),
+           ('0'..'9' | 'a'..'f' | 'A'..'F') ->
+    Buffer.add_char buffer (char_for_hexadecimal_code 2 lexbuf);
+    string state
   | '\\', any ->
     if in_comment state then
       string state
