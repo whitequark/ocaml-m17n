@@ -486,12 +486,11 @@ and skip_sharp_bang { lexbuf } =
 type location' = [%import: Location.t [@with Lexing.position := position']] [@@deriving show]
 type token' = [%import: Parser.token [@with Location.t := location']] [@@deriving show]
  *)
-
 let wrap fn =
   fun state oldlexbuf ->
     let token = fn state in
     Sedlexing_uutf.fill_lexbuf state.lexbuf oldlexbuf;
-    (* prerr_endline (show_token' token); *)
+    (* Format.eprintf "%a\n%!" pp_token' token; *)
     token
 
 let token' = wrap token

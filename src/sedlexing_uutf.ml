@@ -1,11 +1,12 @@
 type lexbuf = {
   mutable slex_start_p    : Lexing.position;
-  mutable slex_curr       : (int * Uutf.uchar) Gen.t;
+  mutable slex_curr       : (int * Uutf.uchar) Gen.clonable;
+  mutable slex_curr_g     : (int * Uutf.uchar) Gen.t;
   mutable slex_curr_p     : Lexing.position;
   mutable slex_lexeme     : int list;
 
   mutable slex_slot       : int;
-  mutable slex_mem        : (int * Uutf.uchar) Gen.Restart.t;
+  mutable slex_mem        : (int * Uutf.uchar) Gen.clonable;
   mutable slex_mem_p      : Lexing.position;
   mutable slex_mem_lexeme : int list;
 }
@@ -53,22 +54,25 @@ let create ?(kind=`Batch) ?(filename="//unknown//") input =
     pos_lnum  = 1;
     pos_bol   = 0;
     pos_cnum  = 0; } in
-  let restart = Gen.persistent_lazy (decoder kind input) in
+  let gen =
+    match kind with
+    | `Batch -> Gen.MList.(to_clonable (of_gen_lazy (decoder kind input)))
+    | `Toplevel -> assert false
+  in
   { slex_start_p    = pos;
-    slex_curr       = Gen.start restart;
+    slex_curr       = gen;
+    slex_curr_g     = gen#next;
     slex_curr_p     = pos;
     slex_lexeme     = [];
     slex_slot       = -1;
-    slex_mem        = restart;
+    slex_mem        = gen#clone;
     slex_mem_p      = pos;
     slex_mem_lexeme = []; }
 
 let memorize lexbuf =
-  let restart = Gen.persistent_lazy lexbuf.slex_curr in
-  lexbuf.slex_curr <- Gen.start restart;
   lexbuf.slex_mem_lexeme <- lexbuf.slex_lexeme;
   lexbuf.slex_mem_p <- lexbuf.slex_curr_p;
-  lexbuf.slex_mem <- restart
+  lexbuf.slex_mem <- lexbuf.slex_curr#clone
 
 let start lexbuf =
   lexbuf.slex_start_p <- lexbuf.slex_curr_p;
@@ -78,7 +82,7 @@ let start lexbuf =
 
 let next lexbuf =
   let open Lexing in
-  match lexbuf.slex_curr () with
+  match lexbuf.slex_curr_g () with
   | None -> -1
   | Some (len, uchar) ->
     let pos = lexbuf.slex_curr_p in
@@ -99,7 +103,8 @@ let mark lexbuf slot =
 
 let backtrack lexbuf =
   let slot = lexbuf.slex_slot in
-  lexbuf.slex_curr <- Gen.start lexbuf.slex_mem;
+  lexbuf.slex_curr <- lexbuf.slex_mem#clone;
+  lexbuf.slex_curr_g <- lexbuf.slex_curr#next;
   lexbuf.slex_curr_p <- lexbuf.slex_mem_p;
   lexbuf.slex_lexeme <- lexbuf.slex_mem_lexeme;
   slot
@@ -171,13 +176,27 @@ let set_position lexbuf file line =
     pos_fname = file;
     pos_lnum  = line; }
 
+let rec gen_prepend elem rest =
+  object
+    val mutable state = `Yield
+    method next () =
+      match state with
+      | `Yield -> state <- `Fwd; Some elem
+      | `Fwd -> rest#next ()
+    method clone =
+      match state with
+      | `Yield -> gen_prepend elem rest#clone
+      | `Fwd -> rest#clone
+  end
+
 let unshift lexbuf =
   let open Lexing in
   match lexbuf.slex_lexeme with
   | [] -> assert false
   | uchar :: lexeme ->
     assert (uchar <> 0x000A && uchar < 0x0100);
-    lexbuf.slex_curr <- Gen.append (Gen.singleton (1, uchar)) lexbuf.slex_curr;
+    lexbuf.slex_curr <- gen_prepend (1, uchar) lexbuf.slex_curr;
+    lexbuf.slex_curr_g <- lexbuf.slex_curr#next;
     lexbuf.slex_curr_p <- { lexbuf.slex_curr_p with
       pos_cnum = lexbuf.slex_curr_p.pos_cnum - 1; };
     lexbuf.slex_lexeme <- lexeme
