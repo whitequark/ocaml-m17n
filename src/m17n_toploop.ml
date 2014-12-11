@@ -55,6 +55,11 @@ let wrap_parser fn oldlexbuf =
     raise (Syntaxerr.Error (Syntaxerr.Other loc))
 
 let () =
-  Toploop.parse_toplevel_phrase := wrap_parser Parser.toplevel_phrase;
-  Toploop.parse_use_file := wrap_parser Parser.use_file;
-  prerr_endline "OCaml Multilingualization enabled."
+  if List.exists ((=) "camlp4o") !Topfind.predicates ||
+     List.exists ((=) "camlp4r") !Topfind.predicates then
+    print_endline "m17n is incompatible with camlp4!"
+  else begin
+    Toploop.parse_toplevel_phrase := wrap_parser Parser.toplevel_phrase;
+    Toploop.parse_use_file := wrap_parser Parser.use_file;
+    prerr_endline "OCaml Multilingualization enabled."
+  end

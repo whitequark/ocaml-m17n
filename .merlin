@@ -1,4 +1,4 @@
 B _build/**/*
 S src*/**/*
-PKG compiler-libs.common sedlex uutf uunf uucp gen containers ppx_import ppx_deriving.std
+PKG compiler-libs.common findlib sedlex uutf uunf uucp gen containers ppx_import ppx_deriving.std
 PKG oUnit

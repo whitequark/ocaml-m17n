@@ -2,6 +2,10 @@ build:
 	cp pkg/META.in pkg/META
 	ocaml pkg/build.ml native=true native-dynlink=true utop=true
 
+run: build
+	rlwrap ocaml -I _build/src \
+		`OCAMLPATH=META ocamlfind query -predicates byte,toploop -a-format findlib m17n`
+
 test: build
 	rm -rf _build/src_test
 	ocamlbuild -j 0 -use-ocamlfind -classic-display \
