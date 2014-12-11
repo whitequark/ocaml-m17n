@@ -18,15 +18,21 @@ let maybe_skip_phrase state =
 
 let wrap_parser fn oldlexbuf =
   let open Lexing in
-  let gen () =
-    oldlexbuf.refill_buff oldlexbuf;
-    if oldlexbuf.lex_eof_reached then
+  let rec gen () =
+    if oldlexbuf.lex_eof_reached &&
+       oldlexbuf.lex_curr_pos = oldlexbuf.lex_buffer_len then
       None
-    else
-      Some (oldlexbuf.lex_buffer, oldlexbuf.lex_curr_pos,
-            oldlexbuf.lex_buffer_len - oldlexbuf.lex_curr_pos)
+    else begin
+      if oldlexbuf.lex_curr_pos = oldlexbuf.lex_buffer_len then
+        oldlexbuf.refill_buff oldlexbuf;
+      let curr_pos = oldlexbuf.lex_curr_pos in
+      oldlexbuf.lex_curr_pos <- oldlexbuf.lex_buffer_len;
+      Some (oldlexbuf.lex_buffer, curr_pos,
+            oldlexbuf.lex_buffer_len - curr_pos)
+    end
   in
-  let lexbuf = Sedlexing_uutf.create ~kind:`Toplevel ~filename:!Toploop.input_name gen in
+  let kind = if !Toploop.input_name = "//toplevel//" then `Toplevel else `Batch in
+  let lexbuf = Sedlexing_uutf.create ~kind ~filename:!Toploop.input_name gen in
   let state = Ulexer.create lexbuf in
   try
     (* toplevel's Location is inaccessible (expunged); sync data with ours *)
@@ -50,4 +56,5 @@ let wrap_parser fn oldlexbuf =
 
 let () =
   Toploop.parse_toplevel_phrase := wrap_parser Parser.toplevel_phrase;
+  Toploop.parse_use_file := wrap_parser Parser.use_file;
   prerr_endline "OCaml Multilingualization enabled."
