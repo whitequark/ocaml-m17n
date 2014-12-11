@@ -19,12 +19,12 @@ build-test: [
   "ocamlbuild" "-classic-display" "-use-ocamlfind" "src_test/test_m17n.byte" "--"
 ]
 depends: [
-  "ocamlfind" {build}
+  "ocamlfind"    {build}
   "sedlex"
   "uutf"
   "uunf"
   "uucp"
-  "gen"
+  "gen"          {>= "0.2.3"}
   "ounit"        {test}
   "ppx_deriving" {test}
 ]
