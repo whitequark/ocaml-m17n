@@ -73,6 +73,9 @@ See [technical details](#technical-details) for specifics.
 
 _m17n_ is compatible with ppx syntax extensions such as [ppx_deriving][].
 
+_m17n_ includes integration both with the standard OCaml toplevel and
+[utop][].
+
 _m17n_ does not add Unicode literals or any runtime support for manipulating
 Unicode strings and characters. (See [OCaml pull #80][pr-uchar], [Uutf][], [Uunf][]
 and [Uucd][] projects.)

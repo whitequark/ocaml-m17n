@@ -5,5 +5,8 @@ let () =
   else begin
     Toploop.parse_toplevel_phrase := M17n_wrap.internationalize Parser.toplevel_phrase;
     Toploop.parse_use_file := M17n_wrap.internationalize Parser.use_file;
+    Toploop.print_out_sig_item := M17n_wrap.utf8_print_out_sig_item !Toploop.print_out_sig_item;
+    Toploop.install_printer Predef.path_string Predef.type_string
+      (fun fmt obj -> M17n_wrap.utf8_print_string fmt (Obj.magic obj));
     prerr_endline "OCaml Multilingualization enabled."
   end

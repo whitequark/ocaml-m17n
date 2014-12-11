@@ -54,3 +54,56 @@ let internationalize fn oldlexbuf =
     if !Toploop.input_name = "//toplevel//" then
       maybe_skip_phrase state;
     raise (Syntaxerr.Error (Syntaxerr.Other loc))
+
+let utf8_parenthesized_ident name =
+  (List.mem name ["or"; "mod"; "land"; "lor"; "lxor"; "lsl"; "lsr"; "asr"]) ||
+  (match name.[0] with
+   | 'a'..'z' | 'A'..'Z' | '_' | '\128'..'\255' -> false
+   | _ -> true)
+
+let utf8_print_string fmt s =
+  try
+    try
+      let uutf = Uutf.decoder ~encoding:`UTF_8 (`String s) in
+      let buf  = Buffer.create (String.length s) in
+      let rec loop () =
+        match Uutf.decode uutf with
+        | `Malformed _ -> raise Exit
+        | `End -> ()
+        | `Uchar u ->
+          begin match Uucp.Gc.general_category u with
+          | (`Cc | `Cf | `Cn | `Co | `Cs) -> raise Exit
+          | _ -> Uutf.Buffer.add_utf_8 buf u
+          end;
+          loop ()
+        | `Await -> assert false
+      in
+      Buffer.add_char buf '"';
+      loop ();
+      Buffer.add_char buf '"';
+      Format.pp_print_string fmt (Buffer.contents buf)
+    with Exit ->
+      Format.fprintf fmt "%S" s
+  with Invalid_argument "String.create" ->
+    Format.fprintf fmt "<huge string>"
+
+let utf8_value_ident ppf name =
+  if utf8_parenthesized_ident name then
+    Format.fprintf ppf "( %s )" name
+  else
+    Format.pp_print_string ppf name
+
+let utf8_print_out_sig_item next ppf =
+  function
+  | Outcometree.Osig_value (name, ty, prims) ->
+    let kwd = if prims = [] then "val" else "external" in
+    let pr_prims ppf =
+      function
+        [] -> ()
+      | s :: sl ->
+          Format.fprintf ppf "@ = \"%s\"" s;
+          List.iter (fun s -> Format.fprintf ppf "@ \"%s\"" s) sl
+    in
+    Format.fprintf ppf "@[<2>%s %a :@ %a%a@]" kwd utf8_value_ident name !Toploop.print_out_type
+      ty pr_prims prims
+  | x -> next ppf x

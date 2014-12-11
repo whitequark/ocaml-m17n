@@ -4,14 +4,14 @@ build:
 
 run: build
 	rlwrap ocaml \
-		$$(ocamlfind query -predicates byte,toploop -r -a-format \
-		                   findlib compiler-libs.common gen uutf uunf uucp) \
+		$(shell ocamlfind query -predicates byte,toploop -r -a-format \
+		                        findlib compiler-libs.common gen uutf uunf uucp) \
 		_build/src/m17n.cma _build/src/m17n_toploop.cmo
 
 run_utop: build
 	utop \
-		$$(ocamlfind query -predicates byte,toploop -r -a-format \
-		                   compiler-libs.common gen uutf uunf uucp) \
+		$(shell ocamlfind query -predicates byte,toploop -r -a-format \
+		                        compiler-libs.common gen uutf uunf uucp) \
 		_build/src/m17n.cma _build/src/m17n_utop.cmo
 
 test: build
