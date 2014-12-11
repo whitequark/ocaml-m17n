@@ -1,6 +1,6 @@
 let rec skip_phrase state =
   try
-    match Ulexer.token state with
+    match M17n_lexer.token state with
     | Parser.SEMISEMI | Parser.EOF -> ()
     | _ -> skip_phrase state
   with
@@ -32,11 +32,11 @@ let wrap_parser fn oldlexbuf =
     end
   in
   let kind = if !Toploop.input_name = "//toplevel//" then `Toplevel else `Batch in
-  let lexbuf = Sedlexing_uutf.create ~kind ~filename:!Toploop.input_name gen in
-  let state = Ulexer.create lexbuf in
+  let lexbuf = M17n_sedlexing.create ~kind ~filename:!Toploop.input_name gen in
+  let state = M17n_lexer.create lexbuf in
   try
     (* toplevel's Location is inaccessible (expunged); sync data with ours *)
-    let ast = fn (Ulexer.token' state) oldlexbuf in
+    let ast = fn (M17n_lexer.token' state) oldlexbuf in
     Parsing.clear_parser ();
     ast
   with
@@ -49,7 +49,7 @@ let wrap_parser fn oldlexbuf =
     maybe_skip_phrase state;
     raise err
   | Parsing.Parse_error | Syntaxerr.Escape_error ->
-    let loc = Sedlexing_uutf.location lexbuf in
+    let loc = M17n_sedlexing.location lexbuf in
     if !Toploop.input_name = "//toplevel//" then
       maybe_skip_phrase state;
     raise (Syntaxerr.Error (Syntaxerr.Other loc))

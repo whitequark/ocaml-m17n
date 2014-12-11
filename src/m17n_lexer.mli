@@ -1,6 +1,6 @@
 type state
 
-val create : Sedlexing_uutf.lexbuf -> state
+val create : M17n_sedlexing.lexbuf -> state
 
 val skip_sharp_bang : state -> unit
 val token : state -> Parser.token

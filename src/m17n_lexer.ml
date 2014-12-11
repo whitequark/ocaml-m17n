@@ -1,4 +1,4 @@
-module Sedlexing = Sedlexing_uutf
+module Sedlexing = M17n_sedlexing
 
 open Parser
 
@@ -489,7 +489,7 @@ type token' = [%import: Parser.token [@with Location.t := location']] [@@derivin
 let wrap fn =
   fun state oldlexbuf ->
     let token = fn state in
-    Sedlexing_uutf.fill_lexbuf state.lexbuf oldlexbuf;
+    Sedlexing.fill_lexbuf state.lexbuf oldlexbuf;
     (* Format.eprintf "%a\n%!" pp_token' token; *)
     token
 

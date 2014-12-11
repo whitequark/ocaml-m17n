@@ -1,7 +1,7 @@
 let wrap_parser fn lexbuf =
-  let state = Ulexer.create lexbuf in
+  let state = M17n_lexer.create lexbuf in
   let oldlexbuf = Lexing.from_string "" in
-  let ast = fn (Ulexer.token' state) oldlexbuf in
+  let ast = fn (M17n_lexer.token' state) oldlexbuf in
   Parsing.clear_parser ();
   ast
 
@@ -24,7 +24,7 @@ let () =
       | 0 -> None
       | n -> Some (buf, 0, n)
   in
-  let lexbuf = Sedlexing_uutf.create ~filename input in
+  let lexbuf = M17n_sedlexing.create ~filename input in
   try
     if Filename.check_suffix filename ".mli" then
       let ast = wrap_parser Parser.interface lexbuf in
@@ -41,7 +41,7 @@ let () =
        exit 1)
   with
   | Parsing.Parse_error | Syntaxerr.Escape_error ->
-    let exn = Syntaxerr.Error (Syntaxerr.Other (Sedlexing_uutf.location lexbuf)) in
+    let exn = Syntaxerr.Error (Syntaxerr.Other (M17n_sedlexing.location lexbuf)) in
     Location.report_exception Format.err_formatter exn;
   | exn ->
     Location.report_exception Format.err_formatter exn;
