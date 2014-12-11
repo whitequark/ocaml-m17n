@@ -7,7 +7,7 @@ let create_hashtbl num elems =
   List.iter (fun (k,v) -> Hashtbl.add h k v) elems;
   h
 
-let keyword_table =
+let keywords =
   create_hashtbl 149 [
     "and",          AND;
     "as",           AS;
@@ -124,7 +124,7 @@ let check_id_start offset lexbuf =
 
 let get_label_name lexbuf =
   let name = Sedlexing.utf8_sub_lexeme ~normalize:`NFC (1, -2) lexbuf in
-  if Hashtbl.mem keyword_table name then
+  if Hashtbl.mem keywords name then
     raise (Lexer.Error (Lexer.Keyword_as_label name, Sedlexing.location lexbuf));
   name
 
@@ -242,7 +242,7 @@ let rec token ({ lexbuf } as state) =
   | lowercase, Star identchar ->
     check_id_start 0 lexbuf;
     let str = Sedlexing.utf8_lexeme ~normalize:`NFC lexbuf in
-    (try Hashtbl.find keyword_table str
+    (try Hashtbl.find keywords str
      with Not_found -> LIDENT str)
   | int_literal ->
     begin try
