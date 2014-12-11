@@ -14,9 +14,9 @@ let () =
     Pkg.lib ~exts:Exts.interface_opt "src/m17n_sedlexing";
     Pkg.lib ~exts:Exts.interface_opt "src/m17n_lexer";
     Pkg.lib ~exts:Exts.library "src/m17n";
-    Pkg.lib ~exts:[".cma"] "src/toploop_m17n";
-    Pkg.lib ~cond:(Env.bool "utop") ~exts:[".cma"] "src/utop_m17n";
-    Pkg.bin ~auto:true "src/pp_m17n" ~dst:"ocamlm17n";
+    Pkg.lib ~exts:[".cmo"] "src/m17n_toploop";
+    Pkg.lib ~cond:(Env.bool "utop") ~exts:[".cmo"] "src/m17n_utop";
+    Pkg.bin ~auto:true "src/m17n_pp" ~dst:"ocamlm17n";
     Pkg.doc "README.md";
     Pkg.doc "LICENSE.txt";
     Pkg.doc "CHANGELOG.md"; ]
