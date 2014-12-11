@@ -90,7 +90,8 @@ and [Uucd][] projects.)
 
 They can. However, _m17n_ issues a warning if more than one script
 is used in an identifier, hopefully handling most of the confusing
-cases.
+cases. You can still use several scripts if you separate them
+by underscores, e.g. `show_色`.
 
 ### Localized error messages?
 
@@ -138,7 +139,7 @@ with [ID_Continue][d1].
 All identifiers are normalized to [NFC][nf]. However, strings are not normalized.
 
 These rules closely follow the recommendations of [Unicode TR31][tr31].
-Specifically, _m17n_ conforms to Unicode 6.3 [UAX31 Level 1][C2], observing [R1][]
+Formally, _m17n_ conforms to Unicode 6.3 [UAX31 Level 1][C2], observing [R1][]
 and [R3][] with the profile specified above and [R4][] unconditionally
 with normalization to [NFC][nf].
 
@@ -151,6 +152,21 @@ with normalization to [NFC][nf].
 [r3]: http://unicode.org/reports/tr31/#R3
 [r4]: http://unicode.org/reports/tr31/#R4
 [tr31]: http://unicode.org/reports/tr31/
+
+### Detecting confusable characters
+
+_m17n_ follows [Unicode TR39][tr39] in its handling of confusable characters.
+
+Within a single identifier chunk (a part of an identifier separated by
+U+005F LOW LINE), all characters have to satisfy the [Highly Restrictive][highrst]
+mixed script detection.
+
+(TODO: whole program)
+
+If any of this is not true, _m17n_ issues a warning.
+
+[tr39]: http://www.unicode.org/reports/tr39
+[highrst]: http://www.unicode.org/reports/tr39/#highly_restrictive
 
 ### Interaction with filesystem
 
@@ -174,8 +190,8 @@ directories and looking for any OCaml build products whose basenames are
 identical to the names of any referenced modules under toNFKC_Casefold
 (definition R5 in [Unicode 6.3 section 3.13][u63]), but not as-is.
 This measure should be enough to not only catch all instances of
-mis-normalized filenames, but also incorrect capitalization and look-alike
-characters.
+mis-normalized filenames, but also incorrect capitalization and some
+look-alike characters.
 
 [winfn]: http://msdn.microsoft.com/en-us/library/aa365247(v=VS.85).aspx
 [wincs]: https://support.microsoft.com/KB/100625

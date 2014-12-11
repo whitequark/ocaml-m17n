@@ -53,7 +53,6 @@ let internationalize fn oldlexbuf =
   let state = M17n_lexer.create lexbuf in
   try
     try
-      (* toplevel's Location is inaccessible (expunged); sync data with ours *)
       let ast = fn (M17n_lexer.token' state) oldlexbuf in
       Parsing.clear_parser ();
       ast

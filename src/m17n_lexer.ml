@@ -83,14 +83,14 @@ let escape_unicode uchar =
   | _ ->
     Printf.sprintf "U+%04d %s" uchar (Sedlexing.encode [uchar])
 
-let report_error ppf =
+let report_error fmt =
   function
   | Illegal_character u ->
-    Format.fprintf ppf "Illegal character (%s)" (escape_unicode u)
+    Format.fprintf fmt "Illegal character (%s)" (escape_unicode u)
   | Invalid_UTF_8 ->
-    Format.fprintf ppf "Invalid UTF-8"
+    Format.fprintf fmt "Invalid UTF-8"
   | Char_range_exceeded ->
-    Format.fprintf ppf "Unicode character exceeds range of type char"
+    Format.fprintf fmt "Unicode character exceeds range of type char"
 
 let () =
   Location.register_error_of_exn
@@ -98,6 +98,10 @@ let () =
     | Error (err, loc) ->
       Some (Location.error_of_printer loc report_error err)
     | _ -> None)
+
+let report_warnings fmt warnings =
+  warnings |> List.iter (fun (loc, warning) ->
+    Location.print_warning loc fmt warning)
 
 type state = {
           lexbuf        : Sedlexing.lexbuf;
@@ -121,6 +125,62 @@ let check_id_start offset lexbuf =
   let id_char = List.nth (Sedlexing.lexeme lexbuf) offset in
   if not (Uucp.Id.is_id_start id_char) then
     raise (Error (Illegal_character id_char, Sedlexing.location lexbuf))
+
+let check_mixed_script exts =
+  let exts = List.sort_uniq compare exts in
+  (* Are all characters from a single script? *)
+  match exts with
+  | [] -> `Single
+  | ext :: rest ->
+    let soss = List.fold_left (fun soss exts ->
+                  List.filter (fun s -> List.exists ((=) s) exts) soss) ext rest in
+    if soss <> [] then
+      `Single
+    else
+      let covers scripts =
+        List.for_all (fun ext ->
+          List.filter (fun s -> List.exists ((=) s) scripts) ext <> []) exts
+      in
+      (* Is it covered by:
+          * Han + Hiragana + Katakana;
+          * Han + Bopomofo; or
+          * Han + Hangul? *)
+      if covers [`Hani;`Hira;`Kana] || covers [`Hani;`Bopo] || covers [`Hani;`Hang] then
+        `Single
+      else
+        `Mixed (List.sort_uniq compare (List.concat exts))
+
+let check_mixed_script_chunks uchars =
+  uchars |>
+  (* Map characters to script extensions, ignoring Common and Inherited
+     scripts, i.e. compute Set Of Script Sets. However, keep _ as-is. *)
+  List.fold_left (fun acc uchar ->
+    match Uucp.Script.script_extensions uchar with
+    | [`Zinh] | [`Zyyy] | [`Zzzz] when uchar <> 0x005F (* LOW LINE *) -> acc
+    | scripts -> scripts :: acc) [] |>
+  (* Divide the identifier into chunks separated by _ and verify they
+     all comply with Highly Restrictive. *)
+  let rec loop chunk exts =
+    match exts with
+    | [] -> check_mixed_script chunk
+    | [`Zyyy] :: exts ->
+      begin match check_mixed_script chunk with
+      | `Single -> loop [] exts
+      | mixed  -> mixed
+      end
+    | ext :: exts -> loop (ext :: chunk) exts
+  in
+  loop []
+
+let check_confusable_identifier lexbuf =
+  match check_mixed_script_chunks (Sedlexing.lexeme lexbuf) with
+  | `Single -> ()
+  | `Mixed scripts ->
+    let msg = "Identifier contains a mixed script sequence: " ^
+              (Sedlexing.utf8_lexeme lexbuf) ^ " (" ^
+              (String.concat ", " (List.map
+                (fun x -> Format.asprintf "%a" Uucp.Script.pp x) scripts)) ^ ")" in
+    report_warnings Format.err_formatter [Sedlexing.location lexbuf, Warnings.Preprocessor msg]
 
 let get_label_name lexbuf =
   let name = Sedlexing.utf8_sub_lexeme ~normalize:`NFC (1, -2) lexbuf in
@@ -221,6 +281,7 @@ let rec token ({ lexbuf } as state) =
   | '_' -> UNDERSCORE
   | '~' -> TILDE
   | uppercase, Star identchar ->
+    check_confusable_identifier lexbuf;
     UIDENT (Sedlexing.utf8_lexeme ~normalize:`NFC lexbuf)
   | '@', (uppercase | lowercase), Star identchar ->
     let first = Sedlexing.lexeme_char 1 lexbuf
@@ -231,19 +292,26 @@ let rec token ({ lexbuf } as state) =
       | `Uchars [] -> assert false
       | `Uchars (mapped :: _) -> mapped
     in
+    check_confusable_identifier lexbuf;
     UIDENT (Sedlexing.encode ~normalize:`NFC (first :: rest))
   | '~', lowercase, Star identchar, ':' ->
     check_id_start 1 lexbuf;
+    check_confusable_identifier lexbuf;
     LABEL (get_label_name lexbuf)
   | '?' -> QUESTION
   | '?', lowercase, Star identchar, ':' ->
     check_id_start 1 lexbuf;
+    check_confusable_identifier lexbuf;
     OPTLABEL (get_label_name lexbuf)
   | lowercase, Star identchar ->
     check_id_start 0 lexbuf;
     let str = Sedlexing.utf8_lexeme ~normalize:`NFC lexbuf in
-    (try Hashtbl.find keywords str
-     with Not_found -> LIDENT str)
+    begin try
+      Hashtbl.find keywords str
+    with Not_found ->
+      check_confusable_identifier lexbuf;
+      LIDENT str
+    end
   | int_literal ->
     begin try
       INT (convert_int_literal (Sedlexing.utf8_lexeme lexbuf))
