@@ -23,9 +23,8 @@ let wrap_parser fn oldlexbuf =
     if oldlexbuf.lex_eof_reached then
       None
     else
-      let start_pos = oldlexbuf.lex_start_pos in
-      oldlexbuf.lex_start_pos <- oldlexbuf.lex_buffer_len;
-      Some (oldlexbuf.lex_buffer, start_pos, oldlexbuf.lex_buffer_len - start_pos)
+      Some (oldlexbuf.lex_buffer, oldlexbuf.lex_curr_pos,
+            oldlexbuf.lex_buffer_len - oldlexbuf.lex_curr_pos)
   in
   let lexbuf = Sedlexing_uutf.create ~kind:`Toplevel ~filename:!Toploop.input_name gen in
   let state = Ulexer.create lexbuf in
