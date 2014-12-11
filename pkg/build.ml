@@ -11,6 +11,9 @@ let () =
 let () =
   Pkg.describe "m17n" ~builder:`OCamlbuild [
     Pkg.lib "pkg/META";
+    Pkg.lib ~exts:Exts.interface_opt "src/sedlexing_uutf";
+    Pkg.lib ~exts:Exts.interface_opt "src/ulexer";
+    Pkg.lib ~exts:Exts.library "src/m17n";
     Pkg.lib ~exts:[".cma"] "src/toploop_m17n";
     Pkg.lib ~cond:(Env.bool "utop") ~exts:[".cma"] "src/utop_m17n";
     Pkg.bin ~auto:true "src/pp_m17n" ~dst:"ocamlm17n";
