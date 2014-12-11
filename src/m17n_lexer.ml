@@ -103,18 +103,70 @@ let report_warnings fmt warnings =
   warnings |> List.iter (fun (loc, warning) ->
     Location.print_warning loc fmt warning)
 
+let toNFKC_casefold uchars =
+  let uunf = Uunf.create `NFC in
+  let rec add uchar acc =
+    match Uunf.add uunf uchar with
+    | `Uchar uchar' -> add `Await (uchar' :: acc)
+    | `Await -> acc
+  in
+  uchars |> List.fold_left (fun acc uchar ->
+    match Uucp.Case.Nfkc_fold.fold uchar with
+    | `Self -> add (`Uchar uchar) acc
+    | `Uchars uchars' ->
+      List.fold_left (fun acc' uchar' -> add (`Uchar uchar') acc') acc uchars') [] |>
+  add `End |>
+  List.rev
+
 type state = {
           lexbuf        : Sedlexing.lexbuf;
           buffer        : Buffer.t;
   mutable in_string     : bool;
   mutable comment_start : Location.t list;
+
+          cmis_in_scope : (Uutf.uchar list, string) Hashtbl.t; (* after/before toNFKC_Casefold *)
+  mutable uident_state  : [ `Nondot | `Dot | `Uident ];
 }
 
-let create lexbuf =
+let find_cmis load_path =
+  let hashtbl = Hashtbl.create 16 in
+  load_path |>
+  List.fold_left (fun acc dirname ->
+    try
+      let dir = Unix.opendir dirname in
+      let rec loop rest =
+        try
+          let filename = Unix.readdir dir in
+          if Filename.check_suffix filename ".cmi" then
+            loop (Filename.chop_extension filename :: rest)
+          else
+            loop rest
+        with End_of_file ->
+          rest
+      in
+      loop acc
+    with Unix.Unix_error _ ->
+      acc) [] |>
+  List.iter (fun basename ->
+    try
+      let uchars =
+        Uutf.String.fold_utf_8 (fun acc _ ->
+          function
+          | `Malformed _ -> raise Exit
+          | `Uchar u -> u :: acc) [] basename
+      in
+      Hashtbl.add hashtbl (toNFKC_casefold (List.rev uchars)) basename
+    with Exit ->
+      ());
+  hashtbl
+
+let create ?(load_path=ref []) lexbuf =
   { lexbuf;
     buffer = Buffer.create 16;
     in_string = false;
-    comment_start = []; }
+    comment_start = [];
+    uident_state = `Nondot;
+    cmis_in_scope = find_cmis !load_path; }
 
 let in_comment { comment_start } = comment_start = []
 
@@ -549,6 +601,36 @@ and skip_sharp_bang { lexbuf } =
   | "#!", Star (Compl '\n'), '\n', Star (Compl '\n'), "\n!#\n" -> ()
   | "#!", Star (Compl '\n'), '\n' -> ()
   | _ -> ()
+
+(* Wrap [token] in a little state machine to find all references to
+   external modules. This is similar to the algorithm used by ocamldep. *)
+let token ({ lexbuf; cmis_in_scope } as state) =
+  let t = token state in
+  match state.uident_state, t with
+  | `Nondot, UIDENT ident ->
+    let uchars =
+      (* Strip leading @, if any *)
+      match Sedlexing.lexeme lexbuf with
+      | 0x0040 :: rest -> rest | uchars -> uchars
+    in
+    let uchars = toNFKC_casefold uchars in
+    begin try
+      let ident' = Hashtbl.find cmis_in_scope uchars in
+      if ident <> ident' then
+        let msg = "Identifier " ^ ident ^ " is similar but distinct from " ^ ident' ^
+                  ",\nwhich corresponds to a module in load path" in
+        report_warnings Format.err_formatter [Sedlexing.location lexbuf, Warnings.Preprocessor msg]
+    with Not_found ->
+      ()
+    end;
+    state.uident_state <- `Uident; t
+  | `Nondot, _ -> t
+  | `Uident, DOT ->
+    state.uident_state <- `Dot; t
+  | `Dot, UIDENT _ ->
+    state.uident_state <- `Uident; t
+  | (`Uident | `Dot), _ ->
+    state.uident_state <- `Nondot; t
 
 (* type position' = [%import: Lexing.position] [@@deriving show]
 type location' = [%import: Location.t [@with Lexing.position := position']] [@@deriving show]
