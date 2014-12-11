@@ -8,4 +8,6 @@ preprocessor = "ocamlm17n"
 
 # Toplevel
 # List cmas explicitly to avoid polluting global namespace.
-archive(byte, toploop) = "@compiler-libs/ocamlcommon.cma @gen/gen.cma @uutf/uutf.cma @uunf/uunf.cma @uucp/uucp.cma @sedlex/sedlexing.cma m17ntop.cma"
+archive(byte, toploop) = "@compiler-libs/ocamlcommon.cma @gen/gen.cma @uutf/uutf.cma @uunf/uunf.cma @uucp/uucp.cma @sedlex/sedlexing.cma"
+archive(byte, toploop, -pkg_utop) += "toploop_m17n.cma"
+archive(byte, toploop, pkg_utop) += "utop_m17n.cma"

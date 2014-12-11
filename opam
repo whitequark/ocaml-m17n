@@ -13,6 +13,7 @@ substs: [ "pkg/META" ]
 build: [
   "ocaml" "pkg/build.ml" "native=%{ocaml-native}%"
                          "native-dynlink=%{ocaml-native-dynlink}%"
+                         "utop=%{utop:installed}%"
 ]
 build-test: [
   "ocamlbuild" "-classic-display" "-use-ocamlfind" "src_test/test_m17n.byte" "--"
@@ -26,5 +27,11 @@ depends: [
   "gen"
   "ounit"        {test}
   "ppx_deriving" {test}
+]
+depopts: [
+  "utop"
+]
+conflicts: [
+#  "utop" {< "1.17"}
 ]
 available: [ ocaml-version >= "4.02.0" ]

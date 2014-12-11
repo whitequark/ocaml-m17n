@@ -1,6 +1,6 @@
 build:
 	cp pkg/META.in pkg/META
-	ocaml pkg/build.ml native=true native-dynlink=true
+	ocaml pkg/build.ml native=true native-dynlink=true utop=true
 
 test: build
 	rm -rf _build/src_test

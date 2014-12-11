@@ -30,22 +30,21 @@ let wrap_parser fn oldlexbuf =
   let state = Ulexer.create lexbuf in
   try
     (* toplevel's Location is inaccessible (expunged); sync data with ours *)
-    Location.input_name := oldlexbuf.lex_start_p.pos_fname;
     let ast = fn (Ulexer.token' state) oldlexbuf in
     Parsing.clear_parser ();
     ast
   with
   | Lexer.Error(Lexer.Illegal_character _, _) as err
-      when !Location.input_name = "//toplevel//" ->
+      when !Toploop.input_name = "//toplevel//" ->
     skip_phrase state;
     raise err
   | Syntaxerr.Error _ as err
-      when !Location.input_name = "//toplevel//" ->
+      when !Toploop.input_name = "//toplevel//" ->
     maybe_skip_phrase state;
     raise err
   | Parsing.Parse_error | Syntaxerr.Escape_error ->
     let loc = Sedlexing_uutf.location lexbuf in
-    if !Location.input_name = "//toplevel//" then
+    if !Toploop.input_name = "//toplevel//" then
       maybe_skip_phrase state;
     raise (Syntaxerr.Error (Syntaxerr.Other loc))
 
