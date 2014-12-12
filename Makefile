@@ -19,6 +19,14 @@ test: build
 	ocamlbuild -j 0 -use-ocamlfind -classic-display \
 		src_test/test_m17n.byte --
 
+gen:
+	[ -e src_gen/confusables.txt ] || \
+		wget http://www.unicode.org/Public/security/7.0.0/confusables.txt \
+				 -O src_gen/confusables.txt
+	ocamlbuild -j 0 -use-ocamlfind -classic-display \
+		src_gen/gen_confusables.native -- \
+		src_gen/confusables.txt src/m17n_confusable_gen.ml
+
 clean:
 	ocamlbuild -clean
 

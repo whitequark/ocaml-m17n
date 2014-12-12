@@ -118,6 +118,27 @@ let toNFKC_casefold uchars =
   add `End |>
   List.rev
 
+let to_skeleton uchars =
+  let rec bsearch a b needle =
+    if a = b then None
+    else
+      let m = a + (b - a) / 2 in
+      let (uchar, mapping) = M17n_confusable_gen.ma.(m) in
+      if uchar = needle then Some mapping
+      else if uchar > needle then bsearch a m needle
+      else bsearch (m + 1) b needle
+  in
+  let find uchar =
+    bsearch 0 (Array.length M17n_confusable_gen.ma) uchar
+  in
+  uchars |>
+  List.fold_left (fun acc uchar ->
+    match find uchar with
+    | None -> uchar :: acc
+    | Some mapping ->
+      Array.fold_left (fun acc uchar -> uchar :: acc) acc mapping) [] |>
+  List.rev
+
 type state = {
           lexbuf        : Sedlexing.lexbuf;
           buffer        : Buffer.t;
