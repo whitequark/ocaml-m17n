@@ -85,6 +85,7 @@ and [Uucd][] projects.)
 [uutf]: http://erratique.ch/software/uutf
 [uunf]: http://erratique.ch/software/uunf
 [uucd]: http://erratique.ch/software/uucd
+[utop]: https://github.com/diml/utop
 
 ### Can't look-alike characters like a and а be confusing?
 
