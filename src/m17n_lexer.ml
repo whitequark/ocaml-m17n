@@ -145,7 +145,10 @@ type state = {
   mutable in_string     : bool;
   mutable comment_start : Location.t list;
 
-          cmis_in_scope : (Uutf.uchar list, string) Hashtbl.t; (* after/before toNFKC_Casefold *)
+          ident_locs    : (Uutf.uchar list, string * Location.t) Hashtbl.t;
+                          (* after TR39 skeleton/original/location *)
+          cmis_in_scope : (Uutf.uchar list, string) Hashtbl.t;
+                          (* after/before toNFKC_Casefold *)
   mutable uident_state  : [ `Nondot | `Dot | `Uident ];
 }
 
@@ -186,6 +189,7 @@ let create ?(load_path=ref []) lexbuf =
     buffer = Buffer.create 16;
     in_string = false;
     comment_start = [];
+    ident_locs = Hashtbl.create 16;
     uident_state = `Nondot;
     cmis_in_scope = find_cmis !load_path; }
 
@@ -245,15 +249,28 @@ let check_mixed_script_chunks uchars =
   in
   loop []
 
-let check_confusable_identifier lexbuf =
-  match check_mixed_script_chunks (Sedlexing.lexeme lexbuf) with
+let check_confusable_identifier lexbuf ident_locs =
+  let lexeme = Sedlexing.lexeme lexbuf in
+  let utf8_lexeme = Sedlexing.encode ~normalize:`NFC lexeme in
+  begin match check_mixed_script_chunks lexeme with
   | `Single -> ()
   | `Mixed scripts ->
-    let msg = "Identifier contains a mixed script sequence: " ^
-              (Sedlexing.utf8_lexeme lexbuf) ^ " (" ^
-              (String.concat ", " (List.map
-                (fun x -> Format.asprintf "%a" Uucp.Script.pp x) scripts)) ^ ")" in
+    let msg = "Identifier " ^ utf8_lexeme ^ " contains a mixed script sequence" ^
+              " (" ^ (String.concat ", " (List.map
+                        (fun x -> Format.asprintf "%a" Uucp.Script.pp x) scripts)) ^ ")" in
     report_warnings Format.err_formatter [Sedlexing.location lexbuf, Warnings.Preprocessor msg]
+  end;
+  let skeleton = to_skeleton lexeme in
+  try
+    let utf8_lexeme', location' = Hashtbl.find ident_locs skeleton in
+    if utf8_lexeme' <> utf8_lexeme then begin
+      let msg = "Identifier " ^ utf8_lexeme ^ " looks confusingly similar to another" in
+      report_warnings Format.err_formatter [Sedlexing.location lexbuf, Warnings.Preprocessor msg];
+      let msg = "Identifier " ^ utf8_lexeme' ^ " defined earlier" in
+      report_warnings Format.err_formatter [location', Warnings.Preprocessor msg]
+    end
+  with Not_found ->
+    Hashtbl.add ident_locs skeleton (utf8_lexeme, Sedlexing.location lexbuf)
 
 let get_label_name lexbuf =
   let name = Sedlexing.utf8_sub_lexeme ~normalize:`NFC (1, -2) lexbuf in
@@ -345,7 +362,7 @@ let float_literal =
                    Opt (Chars "eE", Opt (Chars "+-"), '0'..'9',
                         Star ('0'..'9' | '_')) ]
 
-let rec token ({ lexbuf } as state) =
+let rec token ({ lexbuf; ident_locs } as state) =
   match%sedlex lexbuf with
   | "\\\n" ->
     raise (Error (Illegal_character (List.hd (Sedlexing.lexeme lexbuf)),
@@ -354,7 +371,7 @@ let rec token ({ lexbuf } as state) =
   | '_' -> UNDERSCORE
   | '~' -> TILDE
   | uppercase, Star identchar ->
-    check_confusable_identifier lexbuf;
+    check_confusable_identifier lexbuf ident_locs;
     UIDENT (Sedlexing.utf8_lexeme ~normalize:`NFC lexbuf)
   | '@', (uppercase | lowercase), Star identchar ->
     let first = Sedlexing.lexeme_char 1 lexbuf
@@ -365,16 +382,16 @@ let rec token ({ lexbuf } as state) =
       | `Uchars [] -> assert false
       | `Uchars (mapped :: _) -> mapped
     in
-    check_confusable_identifier lexbuf;
+    check_confusable_identifier lexbuf ident_locs;
     UIDENT (Sedlexing.encode ~normalize:`NFC (first :: rest))
   | '~', lowercase, Star identchar, ':' ->
     check_id_start 1 lexbuf;
-    check_confusable_identifier lexbuf;
+    check_confusable_identifier lexbuf ident_locs;
     LABEL (get_label_name lexbuf)
   | '?' -> QUESTION
   | '?', lowercase, Star identchar, ':' ->
     check_id_start 1 lexbuf;
-    check_confusable_identifier lexbuf;
+    check_confusable_identifier lexbuf ident_locs;
     OPTLABEL (get_label_name lexbuf)
   | lowercase, Star identchar ->
     check_id_start 0 lexbuf;
@@ -382,7 +399,7 @@ let rec token ({ lexbuf } as state) =
     begin try
       Hashtbl.find keywords str
     with Not_found ->
-      check_confusable_identifier lexbuf;
+      check_confusable_identifier lexbuf ident_locs;
       LIDENT str
     end
   | int_literal ->

@@ -88,10 +88,15 @@ and [Uucd][] projects.)
 
 ### Can't look-alike characters like a and а be confusing?
 
-They can. However, _m17n_ issues a warning if more than one script
+They can.
+
+However, _m17n_ issues a warning if more than one script
 is used in an identifier, hopefully handling most of the confusing
 cases. You can still use several scripts if you separate them
 by underscores, e.g. `show_色`.
+
+Additionally, _m17n_ issues a warning if any two identifiers
+look alike enough to be visually confusable.
 
 ### Localized error messages?
 
@@ -155,18 +160,22 @@ with normalization to [NFC][nf].
 
 ### Detecting confusable characters
 
-_m17n_ follows [Unicode TR39][tr39] in its handling of confusable characters.
+_m17n_ follows [Unicode TR39][tr39] at Unicode 7.0.0 in its handling
+of confusable characters.
 
 Within a single identifier chunk (a part of an identifier separated by
-U+005F LOW LINE), all characters have to satisfy the [Highly Restrictive][highrst]
+U+005F LOW LINE), all characters should satisfy the [Highly Restrictive][highrst]
 mixed script detection.
 
-(TODO: whole program)
+Within a single source chunk, all identifiers should not be [confusable][confusable]
+according to the [Mixed-Script Any-Case][confusMA] table.
 
 If any of this is not true, _m17n_ issues a warning.
 
 [tr39]: http://www.unicode.org/reports/tr39
 [highrst]: http://www.unicode.org/reports/tr39/#highly_restrictive
+[confusable]: http://www.unicode.org/reports/tr39/#Confusable_Detection
+[confusMA]: http://www.unicode.org/reports/tr39/#ma
 
 ### Interaction with filesystem
 
