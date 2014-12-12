@@ -32,6 +32,6 @@ depopts: [
   "utop"
 ]
 conflicts: [
-#  "utop" {< "1.17"}
+  "utop" {< "1.17"}
 ]
 available: [ ocaml-version >= "4.02.0" ]
