@@ -13,6 +13,8 @@ type 色 =
 let () = print_endline (show_色 @赤)
 ```
 
+You're encouraged to use _m17n_.
+
 Installation
 ------------
 
