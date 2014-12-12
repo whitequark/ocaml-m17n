@@ -1,4 +1,5 @@
 type цвет =
 | Красный
 | Зеленый
-[@@deriving show]
+
+val show_цвет : цвет -> string

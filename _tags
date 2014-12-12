@@ -1,4 +1,4 @@
-true: warn(@5@8@10@11@12@14@23@24@26@29@40), bin_annot, safe_string
+true: warn(@5@8@10@11@12@14@23-24@26@29@40), bin_annot, safe_string
 
 "src": include
 <src/*>: package(unix compiler-libs.common findlib gen uutf uunf uucp sedlex)
@@ -6,4 +6,4 @@ true: warn(@5@8@10@11@12@14@23@24@26@29@40), bin_annot, safe_string
 
 <src_gen/*>: package(sedlex)
 
-<src_test/*>|<src_test/**/*>: debug, m17n, package(oUnit ppx_deriving.std)
+<src_test/*>|<src_test/**/*>: debug, m17n, package(oUnit)

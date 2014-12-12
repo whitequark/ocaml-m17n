@@ -1,6 +1,6 @@
 open OUnit2
 
-let suite = [
+let suite = "Test m17n" >::: [
     Test_ru.suite;
     Test_ja.suite;
   ]
