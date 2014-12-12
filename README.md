@@ -21,7 +21,7 @@ compiler. Thankfully, installing it (and _master_ versions of some
 supplementary packages) with [OPAM 1.2][opam] is as simple as:
 
 ``` sh
-opam switch 4.03+pr???
+opam switch 4.03+pr125
 opam pin add -y m17n git://github.com/whitequark/ocaml-m17n
 opam pin add ppx_tools git://github.com/whitequark/ppx_tools
 ```
