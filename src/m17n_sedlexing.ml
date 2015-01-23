@@ -11,18 +11,12 @@ type lexbuf = {
   mutable slex_mem_lexeme : int list;
 }
 
-let uchar_len u =
-  let buf  = Bytes.create 5 in
-  let uutf = Uutf.encoder `UTF_8 `Manual in
-  Uutf.Manual.dst uutf (Bytes.unsafe_to_string buf) 0 5;
-  assert (`Ok = Uutf.encode uutf (`Uchar u));
-  Bytes.length buf - (Uutf.Manual.dst_rem uutf)
-
 (* Process a `string gen` and return an `(int, uchar) gen`, iterating
    decoded Unicode characters, together with their lengths in
    the UTF-8 *byte* representation. *)
 let decoder kind input =
   let uutf = Uutf.decoder ~nln:(`ASCII 0x000A) ~encoding:`UTF_8 `Manual in
+  let pos  = ref 0 in
   let rec gen () =
     match Uutf.decode uutf with
     | `End -> None
@@ -30,7 +24,10 @@ let decoder kind input =
       if kind = `Batch then
         Some (1, u)
       else
-        Some (uchar_len u, u) (* TODO *)
+        let pos' = Uutf.decoder_byte_count uutf in
+        let len  = pos' - !pos in
+        pos := pos';
+        Some (len, u)
     | `Await -> (* We exhausted the buffer. *)
       begin match input () with
       | None -> (* We exhausted the input. *)

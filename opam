@@ -21,7 +21,7 @@ build-test: [
 depends: [
   "ocamlfind"    {build}
   "sedlex"
-  "uutf"
+  "uutf"         {>= "0.9.4"}
   "uunf"
   "uucp"
   "gen"          {>= "0.2.3"}
