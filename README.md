@@ -18,19 +18,18 @@ You're encouraged to use _m17n_.
 Installation
 ------------
 
-Because of [PR6695][], it is necessary to use a patched version of the OCaml
-compiler. Thankfully, installing it (and _master_ versions of some
-supplementary packages) with [OPAM 1.2][opam] is as simple as:
+_m17n_ currently requires a trunk (unreleased) version of the OCaml
+compiler. Thankfully, installing it (and some supplementary packages)
+with [OPAM 1.2][opam] is as simple as:
 
 ``` sh
-opam switch 4.03+pr125
-opam pin add -y m17n git://github.com/whitequark/ocaml-m17n
-opam pin add ppx_tools git://github.com/whitequark/ppx_tools
+opam switch 4.03+trunk
+opam pin add -y ppx_tools https://github.com/alainfrisch/ppx_tools
+opam pin add -y m17n https://github.com/whitequark/ocaml-m17n
 ```
 
 Note that _m17n_ is not compatible with [camlp4][].
 
-[PR6695]: http://caml.inria.fr/mantis/view.php?id=6695
 [opam]: https://opam.ocaml.org
 [camlp4]: https://github.com/ocaml/camlp4/
 
