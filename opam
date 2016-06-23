@@ -21,10 +21,10 @@ build-test: [
 depends: [
   "ocamlfind"    {build}
   "sedlex"
-  "uutf"         {>= "0.9.4"}
-  "uunf"
-  "uucp"
-  "gen"          {>= "0.2.3"}
+  "uutf"         {>= "0.9.4" & < "1.0.0"}
+  "uunf"         {>= "1.0.0" & < "2.0.0"}
+  "uucp"         {>= "1.1.0" & < "2.0.0"}
+  "gen"          {>= "0.2.3" & < "0.5"}
   "ounit"        {test}
   "ppx_deriving" {test}
 ]
@@ -34,4 +34,4 @@ depopts: [
 conflicts: [
   "utop" {< "1.17"}
 ]
-available: [ ocaml-version >= "4.02.0" ]
+available: [ ocaml-version = "4.03.0" ]
