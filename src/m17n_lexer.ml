@@ -403,31 +403,16 @@ let rec token ({ lexbuf; ident_locs } as state) =
       LIDENT str
     end
   | int_literal ->
-    begin try
-      INT (convert_int_literal (Sedlexing.utf8_lexeme lexbuf))
-    with Failure _ ->
-      raise (Lexer.Error (Lexer.Literal_overflow "int", Sedlexing.location lexbuf))
-    end
+    INT (Sedlexing.utf8_lexeme lexbuf, None)
+  | int_literal, ('A'..'Z' | 'a'..'z') ->
+    INT (Sedlexing.utf8_sub_lexeme (0, -2) lexbuf,
+         Some (Char.chr (List.hd (List.rev (Sedlexing.lexeme lexbuf)))))
   | float_literal ->
-    FLOAT (Sedlexing.encode (List.filter ((<>) (Char.code '_')) (Sedlexing.lexeme lexbuf)))
-  | int_literal, "l" ->
-    begin try
-      INT32 (convert_int32_literal (Sedlexing.utf8_lexeme lexbuf))
-    with Failure _ ->
-      raise (Lexer.Error (Lexer.Literal_overflow "int32", Sedlexing.location lexbuf))
-    end
-  | int_literal, "L" ->
-    begin try
-      INT64 (convert_int64_literal (Sedlexing.utf8_lexeme lexbuf))
-    with Failure _ ->
-      raise (Lexer.Error (Lexer.Literal_overflow "int64", Sedlexing.location lexbuf))
-    end
-  | int_literal, "n" ->
-    begin try
-      NATIVEINT (convert_nativeint_literal (Sedlexing.utf8_lexeme lexbuf))
-    with Failure _ ->
-      raise (Lexer.Error (Lexer.Literal_overflow "nativeint", Sedlexing.location lexbuf))
-    end
+    FLOAT (Sedlexing.encode (List.filter ((<>) (Char.code '_')) (Sedlexing.lexeme lexbuf)),
+           None)
+  | float_literal, ('A'..'Z' | 'a'..'z') ->
+    FLOAT (Sedlexing.encode (List.filter ((<>) (Char.code '_')) (Sedlexing.lexeme lexbuf)),
+           Some (Char.chr (List.hd (List.rev (Sedlexing.lexeme lexbuf)))))
   | '"' ->
     STRING (with_string state string, None)
   | '{', Star lowercase, '|' ->

@@ -18,14 +18,10 @@ You're encouraged to use _m17n_.
 Installation
 ------------
 
-_m17n_ currently requires a trunk (unreleased) version of the OCaml
-compiler. Thankfully, installing it (and some supplementary packages)
-with [OPAM 1.2][opam] is as simple as:
+_m17n_ can be installed via [OPAM][]:
 
 ``` sh
-opam switch 4.03+trunk
-opam pin add -y ppx_tools https://github.com/alainfrisch/ppx_tools
-opam pin add -y m17n https://github.com/whitequark/ocaml-m17n
+opam install m17n
 ```
 
 Note that _m17n_ is not compatible with [camlp4][].
@@ -48,7 +44,7 @@ If you are using [ocamlbuild][], add the following to your `_tags` file:
 <**/*.{ml,mli}>: package(m17n), syntax(utf8)
 ```
 
-_m17n_ also works in toplevel. It can be activated using:
+_m17n_ also works in toplevel as well as [utop][]. It can be activated using:
 
 ```
 #require "m17n";;
@@ -56,6 +52,7 @@ _m17n_ also works in toplevel. It can be activated using:
 
 [ocamlfind]: http://projects.camlcity.org/projects/findlib.html
 [ocamlbuild]: http://nicolaspouillard.fr/ocamlbuild/ocamlbuild-user-guide.html
+[utop]: https://github.com/diml/utop
 
 Features
 --------

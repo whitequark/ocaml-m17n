@@ -116,8 +116,8 @@ let utf8_value_ident ppf name =
 
 let utf8_print_out_sig_item next ppf =
   function
-  | Outcometree.Osig_value (name, ty, prims) ->
-    let kwd = if prims = [] then "val" else "external" in
+  | Outcometree.Osig_value { Outcometree.oval_name; oval_type; oval_prims } ->
+    let kwd = if oval_prims = [] then "val" else "external" in
     let pr_prims ppf =
       function
         [] -> ()
@@ -125,6 +125,7 @@ let utf8_print_out_sig_item next ppf =
           Format.fprintf ppf "@ = \"%s\"" s;
           List.iter (fun s -> Format.fprintf ppf "@ \"%s\"" s) sl
     in
-    Format.fprintf ppf "@[<2>%s %a :@ %a%a@]" kwd utf8_value_ident name !Toploop.print_out_type
-      ty pr_prims prims
+    Format.fprintf ppf "@[<2>%s %a :@ %a%a@]" kwd utf8_value_ident oval_name
+                       !Toploop.print_out_type
+      oval_type pr_prims oval_prims
   | x -> next ppf x
