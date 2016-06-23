@@ -131,7 +131,7 @@ let uunf_normalize form uchars =
   let rec add uchar =
     match Uunf.add uunf uchar with
     | `Uchar u -> Uutf.Buffer.add_utf_8 buf u; add `Await
-    | `Await -> ()
+    | `Await | `End -> ()
   in
   List.iter (fun uchar -> add (`Uchar uchar)) uchars;
   add `End;

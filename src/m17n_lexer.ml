@@ -108,7 +108,7 @@ let toNFKC_casefold uchars =
   let rec add uchar acc =
     match Uunf.add uunf uchar with
     | `Uchar uchar' -> add `Await (uchar' :: acc)
-    | `Await -> acc
+    | `Await | `End -> acc
   in
   uchars |> List.fold_left (fun acc uchar ->
     match Uucp.Case.Nfkc_fold.fold uchar with
