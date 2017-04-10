@@ -46,11 +46,11 @@ let transmogrify_exn exn template =
 let exn_Lexer_Error = extract_exn "\128" "Lexer.Error"
 let exn_Syntaxerr_Error = extract_exn "fun" "Syntaxerr.Error"
 
-let internationalize ?load_path fn oldlexbuf =
+let internationalize ?include_paths fn oldlexbuf =
   let kind = if !Toploop.input_name = "//toplevel//" then `Toplevel else `Batch in
   let lexbuf = M17n_sedlexing.create ~kind ~filename:!Toploop.input_name
                                      (gen_of_lexbuf oldlexbuf) in
-  let state = M17n_lexer.create ?load_path lexbuf in
+  let state = M17n_lexer.create ?include_paths lexbuf in
   try
     try
       let ast = fn (M17n_lexer.token' state) oldlexbuf in

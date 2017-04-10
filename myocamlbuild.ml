@@ -8,5 +8,7 @@ let () = dispatch (fun phase ->
       A"src/m17n_pp.byte";
     flag ["ocaml"; "pp"; "pp_native"; "m17n"] &
       A"src/m17n_pp.native";
+    pflag ["ocaml"; "pp"] "lang" &
+      (fun lang -> S[A"-load"; A("src_lang/m17n_"^lang^".cma")]);
 
   | _ -> ())

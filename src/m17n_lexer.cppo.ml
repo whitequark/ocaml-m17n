@@ -152,9 +152,9 @@ type state = {
   mutable uident_state  : [ `Nondot | `Dot | `Uident ];
 }
 
-let find_cmis load_path =
+let find_cmis include_paths =
   let hashtbl = Hashtbl.create 16 in
-  load_path |>
+  include_paths |>
   List.fold_left (fun acc dirname ->
     try
       let dir = Unix.opendir dirname in
@@ -184,14 +184,14 @@ let find_cmis load_path =
       ());
   hashtbl
 
-let create ?(load_path=ref []) lexbuf =
+let create ?(include_paths=ref []) lexbuf =
   { lexbuf;
     buffer = Buffer.create 16;
     in_string = false;
     comment_start = [];
     ident_locs = Hashtbl.create 16;
     uident_state = `Nondot;
-    cmis_in_scope = find_cmis !load_path; }
+    cmis_in_scope = find_cmis !include_paths; }
 
 let in_comment { comment_start } = comment_start = []
 

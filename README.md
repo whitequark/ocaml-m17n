@@ -50,6 +50,13 @@ _m17n_ also works in toplevel as well as [utop][]. It can be activated using:
 #require "m17n";;
 ```
 
+Instead of the `m17n` package, language-specific packages may be used.
+These packages localize the OCaml keywords. The English keywords can still be always used.
+
+The following localization packages are available:
+
+  * `m17n.zh_HK`
+
 [ocamlfind]: http://projects.camlcity.org/projects/findlib.html
 [ocamlbuild]: http://nicolaspouillard.fr/ocamlbuild/ocamlbuild-user-guide.html
 [utop]: https://github.com/diml/utop
@@ -102,13 +109,6 @@ look alike enough to be visually confusable.
 This will be possible when [PR6696] is fixed.
 
 [PR6696]: http://caml.inria.fr/mantis/view.php?id=6696
-
-### Localized keywords?
-
-It is trivial to add support for these. What's hard is coming up with
-a good localization. I tried to make one, but committing it felt
-worse than kicking a bucket of kittens. If you have one, please
-[open an issue][issue].
 
 ### Are RTL scripts supported?
 

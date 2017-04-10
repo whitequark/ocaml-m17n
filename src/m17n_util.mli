@@ -16,7 +16,7 @@ val utf8_print_string : Format.formatter -> string -> unit
     to [Location.input_name]).
     When the input filename is ["//toplevel//"], toplevel-specific error
     handling is enabled. *)
-val internationalize : ?load_path:string list ref ->
+val internationalize : ?include_paths:string list ref ->
                        ((Lexing.lexbuf -> Parser.token) -> Lexing.lexbuf -> 'a) ->
                        (Lexing.lexbuf -> 'a)
 

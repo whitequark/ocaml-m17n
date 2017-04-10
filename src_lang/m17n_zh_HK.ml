@@ -1,0 +1,61 @@
+open Parser
+
+let () =
+  List.iter (fun (k,v) -> Hashtbl.add M17n_lexer.keywords k v) [
+    (*"and",          AND;*)
+    (*"as",           AS;*)
+    (*"assert",       ASSERT;*)
+    (*"begin",        BEGIN;*)
+    (*"class",        CLASS;*)
+    (*"constraint",   CONSTRAINT;*)
+    "做",            DO;
+    "做完",           DONE;
+    (*"downto",       DOWNTO;*)
+    "否则",           ELSE;
+    (*"end",          END;*)
+    (*"exception",    EXCEPTION;*)
+    (*"external",     EXTERNAL;*)
+    "假",            FALSE;
+    "取",            FOR;
+    "函",            FUN;
+    "函数",           FUNCTION;
+    (*"functor",      FUNCTOR;*)
+    "如果",           IF;
+    "在",            IN;
+    (*"include",      INCLUDE;*)
+    (*"inherit",      INHERIT;*)
+    (*"initializer",  INITIALIZER;*)
+    (*"lazy",         LAZY;*)
+    "设",            LET;
+    "匹配",           MATCH;
+    (*"method",       METHOD;*)
+    "模块",           MODULE;
+    (*"mutable",      MUTABLE;*)
+    (*"new",          NEW;*)
+    (*"object",       OBJECT;*)
+    "的",            OF;
+    "打开",           OPEN;
+    (*"or",           OR;*)
+    (*"private",      PRIVATE;*)
+    "递归",           REC;
+    (*"sig",          SIG;*)
+    (*"struct",       STRUCT;*)
+    "那么",           THEN;
+    "到",            TO;
+    "真",            TRUE;
+    (*"try",          TRY;*)
+    "类型",           TYPE;
+    (*"val",          VAL;*)
+    (*"virtual",      VIRTUAL;*)
+    (*"when",         WHEN;*)
+    "当",            WHILE;
+    "跟",            WITH;
+
+    "求余",           INFIXOP3("mod");
+    (*"land",         INFIXOP3("land");*)
+    (*"lor",          INFIXOP3("lor");*)
+    (*"lxor",         INFIXOP3("lxor");*)
+    (*"lsl",          INFIXOP4("lsl");*)
+    (*"lsr",          INFIXOP4("lsr");*)
+    (*"asr",          INFIXOP4("asr")*)
+  ]
