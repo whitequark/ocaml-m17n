@@ -231,6 +231,11 @@ a seamless Unicode-aware frontend.
 
 [nfnotclosed]: http://www.unicode.org/reports/tr15/#Concatenation
 
+Acknowledgements
+----------------
+
+The zh_HK translation was contributed by Tao Stein.
+
 License
 -------
 
