@@ -8,8 +8,19 @@ let () =
   output_string oc {|"ru"|"ja": include|};
   close_out oc
 
+
+let quote_parens s =
+  if Sys.win32 then
+    s
+  else
+    "'" ^ s ^ "'"
+
+let ocamlbuild =
+  "ocamlbuild -use-ocamlfind -classic-display -plugin-tag " ^
+    quote_parens "package(cppo_ocamlbuild)"
+
 let () =
-  Pkg.describe "m17n" ~builder:`OCamlbuild [
+  Pkg.describe "m17n" ~builder:(`Other (ocamlbuild, "_build")) [
     Pkg.lib "pkg/META";
     Pkg.lib ~exts:Exts.interface_opt "src/m17n_sedlexing";
     Pkg.lib ~exts:Exts.interface_opt "src/m17n_lexer";

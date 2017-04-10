@@ -452,7 +452,11 @@ let rec token ({ lexbuf; ident_locs } as state) =
     Scanf.sscanf lexeme "# %d \"%s@\"\"" (fun line file ->
       Sedlexing.set_position lexbuf file line);
     token state
+#if OCAML_VERSION >= (4, 03, 0)
+  | "#"  -> HASH
+#else
   | "#"  -> SHARP
+#endif
   | "&"  -> AMPERSAND
   | "&&" -> AMPERAMPER
   | "`"  -> BACKQUOTE

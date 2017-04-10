@@ -1,3 +1,6 @@
+OCAMLBUILD=ocamlbuild -j 0 -use-ocamlfind -classic-display \
+	-plugin-tag 'package(cppo_ocamlbuild)'
+
 build:
 	cp pkg/META.in pkg/META
 	ocaml pkg/build.ml native=true native-dynlink=true utop=true
@@ -16,14 +19,14 @@ run_utop: build
 
 test: build
 	rm -rf _build/src_test
-	ocamlbuild -j 0 -use-ocamlfind -classic-display \
+	$(OCAMLBUILD) \
 		src_test/test_m17n.byte --
 
 gen:
 	[ -e src_gen/confusables.txt ] || \
 		wget http://www.unicode.org/Public/security/7.0.0/confusables.txt \
 				 -O src_gen/confusables.txt
-	ocamlbuild -j 0 -use-ocamlfind -classic-display \
+	$(OCAMLBUILD) \
 		src_gen/gen_confusables.native -- \
 		src_gen/confusables.txt src/m17n_confusable_gen.ml
 

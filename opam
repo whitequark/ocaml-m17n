@@ -20,6 +20,7 @@ build-test: [
 ]
 depends: [
   "ocamlfind"    {build}
+  "cppo"         {build}
   "sedlex"
   "uutf"         {>= "0.9.4" & < "1.0.0"}
   "uunf"         {>= "1.0.0" & < "2.0.0"}
@@ -34,4 +35,4 @@ depopts: [
 conflicts: [
   "utop" {< "1.17"}
 ]
-available: [ ocaml-version = "4.03.0" ]
+available: [ ocaml-version >= "4.03.0" & ocaml-version <= "4.04.0" ]
