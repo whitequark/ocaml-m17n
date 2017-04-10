@@ -1,21 +1,21 @@
 type lexbuf = {
   mutable slex_start_p    : Lexing.position;
-  mutable slex_curr       : (int * Uutf.uchar) GenClone.t;
-  mutable slex_curr_g     : (int * Uutf.uchar) Gen.t;
+  mutable slex_curr       : (int * Uchar.t) GenClone.t;
+  mutable slex_curr_g     : (int * Uchar.t) Gen.t;
   mutable slex_curr_p     : Lexing.position;
-  mutable slex_lexeme     : int list;
+  mutable slex_lexeme     : Uchar.t list;
 
   mutable slex_slot       : int;
-  mutable slex_mem        : (int * Uutf.uchar) GenClone.t;
+  mutable slex_mem        : (int * Uchar.t) GenClone.t;
   mutable slex_mem_p      : Lexing.position;
-  mutable slex_mem_lexeme : int list;
+  mutable slex_mem_lexeme : Uchar.t list;
 }
 
 (* Process a `string gen` and return an `(int, uchar) gen`, iterating
    decoded Unicode characters, together with their lengths in
    the UTF-8 *byte* representation. *)
 let decoder kind input =
-  let uutf = Uutf.decoder ~nln:(`ASCII 0x000A) ~encoding:`UTF_8 `Manual in
+  let uutf = Uutf.decoder ~nln:(`ASCII (Uchar.of_int 0x000A)) ~encoding:`UTF_8 `Manual in
   let pos  = ref 0 in
   let rec gen () =
     match Uutf.decode uutf with
@@ -31,9 +31,9 @@ let decoder kind input =
     | `Await -> (* We exhausted the buffer. *)
       begin match input () with
       | None -> (* We exhausted the input. *)
-        Uutf.Manual.src uutf "" 0 0
+        Uutf.Manual.src uutf (Bytes.of_string "") 0 0
       | Some (chunk, start, len) -> (* There's some more input. *)
-        Uutf.Manual.src uutf (Bytes.unsafe_to_string chunk) start len
+        Uutf.Manual.src uutf chunk start len
       end;
       gen ()
     | `Malformed bytes -> (* The input is malformed. *)
@@ -80,7 +80,7 @@ let next lexbuf =
   | None -> -1
   | Some (len, uchar) ->
     let pos = lexbuf.slex_curr_p in
-    if uchar = 0x000A then
+    if Uchar.to_int uchar = 0x000A then
       lexbuf.slex_curr_p <- { pos with
         pos_lnum = pos.pos_lnum + 1;
         pos_cnum = pos.pos_cnum + len;
@@ -89,7 +89,7 @@ let next lexbuf =
       lexbuf.slex_curr_p <- { pos with
         pos_cnum = pos.pos_cnum + len; };
     lexbuf.slex_lexeme <- uchar :: lexbuf.slex_lexeme;
-    uchar
+    Uchar.to_int uchar
 
 let mark lexbuf slot =
   lexbuf.slex_slot <- slot;
@@ -175,10 +175,11 @@ let unshift lexbuf =
   match lexbuf.slex_lexeme with
   | [] -> assert false
   | uchar :: lexeme ->
-    assert (uchar <> 0x000A && uchar < 0x0100);
+    assert (Uchar.to_int uchar <> 0x000A &&
+            Uchar.to_int uchar < 0x0100);
     let slex_curr = GenClone.to_prependable lexbuf.slex_curr in
     slex_curr#prepend (1, uchar);
-    lexbuf.slex_curr <- (slex_curr :> (int * Uutf.uchar) GenClone.t);
+    lexbuf.slex_curr <- (slex_curr :> (int * Uchar.t) GenClone.t);
     lexbuf.slex_curr_g <- slex_curr#gen;
     lexbuf.slex_curr_p <- { lexbuf.slex_curr_p with
       pos_cnum = lexbuf.slex_curr_p.pos_cnum - 1; };

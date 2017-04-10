@@ -3,11 +3,11 @@ type lexbuf
 (** [encode ?normalize uchars] returns the UTF-8 encoded string
     corresponding to the character list [uchars], optionally
     normalizing it as [normalize]. *)
-val encode : ?normalize:[< `NFC | `NFD] -> Uutf.uchar list -> string
+val encode : ?normalize:[< `NFC | `NFD] -> Uchar.t list -> string
 
 (* The interface used by Sedlex *)
 val start : lexbuf -> unit
-val next : lexbuf -> Uutf.uchar
+val next : lexbuf -> int
 val mark : lexbuf -> int -> unit
 val backtrack : lexbuf -> int
 
@@ -24,15 +24,15 @@ val create : ?kind:[`Batch|`Toplevel] -> ?filename:string ->
 
 (** [lexeme lexbuf] returns the list of codepoints comprising
     the current lexeme. *)
-val lexeme : lexbuf -> Uutf.uchar list
+val lexeme : lexbuf -> Uchar.t list
 
 (** [lexeme_char n lexbuf] ≡ [List.nth (lexeme lexbuf) n] *)
-val lexeme_char : int -> lexbuf -> Uutf.uchar
+val lexeme_char : int -> lexbuf -> Uchar.t
 
 (** [sub_lexeme (lft, rgt) lexbuf] returns the subset of the list
     of codepoints comprising the current lexeme. [lft] and [rgt]
     indicate the amount of characters to sk *)
-val sub_lexeme : int * int -> lexbuf -> Uutf.uchar list
+val sub_lexeme : int * int -> lexbuf -> Uchar.t list
 
 (** [utf8_lexeme ?normalize lexbuf] ≡ [encode ?normalize (lexeme lexbuf)] *)
 val utf8_lexeme : ?normalize:[< `NFC | `NFD] -> lexbuf -> string

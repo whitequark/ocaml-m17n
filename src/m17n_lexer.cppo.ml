@@ -68,7 +68,7 @@ let keywords =
   ]
 
 type error =
-| Illegal_character of int
+| Illegal_character of Uchar.t
 | Invalid_UTF_8
 | Char_range_exceeded
 
@@ -79,9 +79,9 @@ exception Unterminated
 let escape_unicode uchar =
   match Uucp.Gc.general_category uchar with
   | (`Cc | `Cf | `Cn | `Co | `Cs) ->
-    Printf.sprintf "U+%04d" uchar
+    Format.asprintf "%a" Uchar.dump uchar
   | _ ->
-    Printf.sprintf "U+%04d %s" uchar (Sedlexing.encode [uchar])
+    Format.asprintf "%a %s" Uchar.dump uchar (Sedlexing.encode [uchar])
 
 let report_error fmt =
   function
@@ -133,10 +133,10 @@ let to_skeleton uchars =
   in
   uchars |>
   List.fold_left (fun acc uchar ->
-    match find uchar with
+    match find (Uchar.to_int uchar) with
     | None -> uchar :: acc
     | Some mapping ->
-      Array.fold_left (fun acc uchar -> uchar :: acc) acc mapping) [] |>
+      Array.fold_left (fun acc uchar -> Uchar.of_int uchar :: acc) acc mapping) [] |>
   List.rev
 
 type state = {
@@ -145,9 +145,9 @@ type state = {
   mutable in_string     : bool;
   mutable comment_start : Location.t list;
 
-          ident_locs    : (Uutf.uchar list, string * Location.t) Hashtbl.t;
+          ident_locs    : (Uchar.t list, string * Location.t) Hashtbl.t;
                           (* after TR39 skeleton/original/location *)
-          cmis_in_scope : (Uutf.uchar list, string) Hashtbl.t;
+          cmis_in_scope : (Uchar.t list, string) Hashtbl.t;
                           (* after/before toNFKC_Casefold *)
   mutable uident_state  : [ `Nondot | `Dot | `Uident ];
 }
@@ -233,7 +233,7 @@ let check_mixed_script_chunks uchars =
      scripts, i.e. compute Set Of Script Sets. However, keep _ as-is. *)
   List.fold_left (fun acc uchar ->
     match Uucp.Script.script_extensions uchar with
-    | [`Zinh] | [`Zyyy] | [`Zzzz] when uchar <> 0x005F (* LOW LINE *) -> acc
+    | [`Zinh] | [`Zyyy] | [`Zzzz] when Uchar.to_int uchar <> 0x005F (* LOW LINE *) -> acc
     | scripts -> scripts :: acc) [] |>
   (* Divide the identifier into chunks separated by _ and verify they
      all comply with Highly Restrictive. *)
@@ -280,12 +280,12 @@ let get_label_name lexbuf =
 
 let char_for_uchar offset lexbuf =
   match Sedlexing.lexeme_char offset lexbuf with
-  | a when a < 0xff -> Char.chr a
+  | a when Uchar.to_int a < 0xff -> Uchar.to_char a
   | u ->
     raise (Error (Char_range_exceeded, Sedlexing.location lexbuf))
 
 let char_for_backslash offset lexbuf =
-  match Sedlexing.lexeme_char offset lexbuf with
+  match Uchar.to_int (Sedlexing.lexeme_char offset lexbuf) with
   | 0x006e (* 'n' *) -> '\010'
   | 0x0072 (* 'r' *) -> '\013'
   | 0x0062 (* 'b' *) -> '\008'
@@ -293,9 +293,12 @@ let char_for_backslash offset lexbuf =
   | _ -> char_for_uchar offset lexbuf
 
 let char_for_decimal_code offset lexbuf =
-  let c = 100 * ((Sedlexing.lexeme_char offset lexbuf) - 48) +
-           10 * ((Sedlexing.lexeme_char (offset+1) lexbuf) - 48) +
-                ((Sedlexing.lexeme_char (offset+2) lexbuf) - 48) in
+  let digit_value_at offset =
+    (Uchar.to_int (Sedlexing.lexeme_char offset lexbuf)) - 48
+  in
+  let c = 100 * (digit_value_at offset) +
+           10 * (digit_value_at (offset + 1)) +
+                (digit_value_at (offset + 2)) in
   if c > 0xff then
     raise (Lexer.Error (Lexer.Illegal_escape (Sedlexing.utf8_lexeme lexbuf),
                         Sedlexing.location lexbuf))
@@ -303,17 +306,14 @@ let char_for_decimal_code offset lexbuf =
     Char.chr c
 
 let char_for_hexadecimal_code offset lexbuf =
-  let d1 = Sedlexing.lexeme_char offset lexbuf in
-  let val1 = if d1 >= 97 then d1 - 87
-             else if d1 >= 65 then d1 - 55
-             else d1 - 48
+  let digit_value_at offset =
+    let d = Uchar.to_int (Sedlexing.lexeme_char offset lexbuf) in
+    if d >= 97 then d - 87
+    else if d >= 65 then d - 55
+    else d - 48
   in
-  let d2 = Sedlexing.lexeme_char (offset+1) lexbuf in
-  let val2 = if d2 >= 97 then d2 - 87
-             else if d2 >= 65 then d2 - 55
-             else d2 - 48
-  in
-  Char.chr (val1 * 16 + val2)
+  Char.chr ((digit_value_at offset) * 16 +
+            (digit_value_at (offset + 1)))
 
 let convert_int_literal s =
   - int_of_string ("-" ^ s)
@@ -406,13 +406,13 @@ let rec token ({ lexbuf; ident_locs } as state) =
     INT (Sedlexing.utf8_lexeme lexbuf, None)
   | int_literal, ('A'..'Z' | 'a'..'z') ->
     INT (Sedlexing.utf8_sub_lexeme (0, -2) lexbuf,
-         Some (Char.chr (List.hd (List.rev (Sedlexing.lexeme lexbuf)))))
+         Some (Uchar.to_char (List.hd (List.rev (Sedlexing.lexeme lexbuf)))))
   | float_literal ->
-    FLOAT (Sedlexing.encode (List.filter ((<>) (Char.code '_')) (Sedlexing.lexeme lexbuf)),
+    FLOAT (Sedlexing.encode (List.filter ((<>) (Uchar.of_char '_')) (Sedlexing.lexeme lexbuf)),
            None)
   | float_literal, ('A'..'Z' | 'a'..'z') ->
-    FLOAT (Sedlexing.encode (List.filter ((<>) (Char.code '_')) (Sedlexing.lexeme lexbuf)),
-           Some (Char.chr (List.hd (List.rev (Sedlexing.lexeme lexbuf)))))
+    FLOAT (Sedlexing.encode (List.filter ((<>) (Uchar.of_char '_')) (Sedlexing.lexeme lexbuf)),
+           Some (Uchar.to_char (List.hd (List.rev (Sedlexing.lexeme lexbuf)))))
   | '"' ->
     STRING (with_string state string, None)
   | '{', Star lowercase, '|' ->
@@ -638,7 +638,8 @@ let token ({ lexbuf; cmis_in_scope } as state) =
     let uchars =
       (* Strip leading @, if any *)
       match Sedlexing.lexeme lexbuf with
-      | 0x0040 :: rest -> rest | uchars -> uchars
+      | first :: rest when Uchar.to_int first = 0x0040 -> rest
+      | uchars -> uchars
     in
     let uchars = toNFKC_casefold uchars in
     begin try

@@ -22,9 +22,9 @@ depends: [
   "ocamlfind"    {build}
   "cppo"         {build}
   "sedlex"
-  "uutf"         {>= "0.9.4" & < "1.0.0"}
-  "uunf"         {>= "1.0.0" & < "2.0.0"}
-  "uucp"         {>= "1.1.0" & < "2.0.0"}
+  "uutf"         {>= "1.0.0" & < "2.0.0"}
+  "uunf"         {>= "2.0.0" & < "3.0.0"}
+  "uucp"         {>= "2.0.0" & < "3.0.0"}
   "gen"          {>= "0.2.3" & < "0.5"}
   "ounit"        {test}
   "ppx_deriving" {test}
