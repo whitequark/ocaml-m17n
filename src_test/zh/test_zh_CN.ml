@@ -12,4 +12,4 @@ let _ =
   如果 x = 1 那么 "x"
   否则 "y"
 
-let suite = "zh_HK" >::: []
+let suite = "zh_CN" >::: []

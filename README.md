@@ -55,7 +55,7 @@ These packages localize the OCaml keywords. The English keywords can still be al
 
 The following localization packages are available:
 
-  * `m17n.zh_HK`
+  * `m17n.zh_CN`
 
 [ocamlfind]: http://projects.camlcity.org/projects/findlib.html
 [ocamlbuild]: http://nicolaspouillard.fr/ocamlbuild/ocamlbuild-user-guide.html
@@ -234,7 +234,7 @@ a seamless Unicode-aware frontend.
 Acknowledgements
 ----------------
 
-The zh_HK translation was contributed by Tao Stein.
+The zh_CN translation was contributed by Tao Stein.
 
 License
 -------

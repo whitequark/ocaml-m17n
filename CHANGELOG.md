@@ -5,7 +5,7 @@ Changelog
 ---
 
   * OCaml 4.04 compatibility.
-  * Localization of keywords to zh_HK, courtesy of Tao Stein.
+  * Localization of keywords to zh_CN, courtesy of Tao Stein.
 
 1.0
 ---
