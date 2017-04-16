@@ -16,11 +16,11 @@ archive(byte, toploop, pkg_utop) += "m17n_utop.cmo"
 
 package "zh_CN" (
   version = "%{version}%"
-  description = "Localization of OCaml source code to Chinese (Hong Kong)"
+  description = "Localization of OCaml source code to Chinese (simplified)"
   requires = "m17n"
 
-  archive(syntax, preprocessor) = "-load m17n_zh_CN.cma"
-  archive(byte, toploop) = "m17n_zh_CN.cmo"
+  archive(syntax, preprocessor) = "-load m17n_zh_CN_keywords.cma"
+  archive(byte, toploop) = "m17n_zh_CN_keywords.cmo"
 )
 
 package "lib" (

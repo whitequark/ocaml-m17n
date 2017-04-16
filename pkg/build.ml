@@ -26,7 +26,8 @@ let () =
     Pkg.lib ~exts:Exts.interface_opt "src/m17n_lexer";
     Pkg.lib ~exts:Exts.interface_opt "src/m17n_util";
     Pkg.lib ~exts:Exts.library "src/m17n";
-    Pkg.lib ~exts:exts_lang "src_lang/m17n_zh_CN";
+    Pkg.lib ~exts:exts_lang "src_lang/m17n_zh_CN_keywords";
+    Pkg.lib ~exts:exts_lang "src_lang/m17n_zh_CN_errors";
     Pkg.lib ~exts:[".cmo"] "src/m17n_toploop";
     Pkg.lib ~cond:(Env.bool "utop") ~exts:[".cmo"] "src/m17n_utop";
     Pkg.bin ~auto:true "src/m17n_pp" ~dst:"ocamlm17n";
