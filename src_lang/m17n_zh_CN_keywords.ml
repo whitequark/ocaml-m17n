@@ -48,8 +48,8 @@ let () =
     "值",          VAL;
     "虚拟",        VIRTUAL;
     "条件",        WHEN;
-    "当",            WHILE;
-    "跟",            WITH;
+    "当",          WHILE;
+    "跟",          WITH;
 
     "求余",           INFIXOP3("mod");
     (*"land",         INFIXOP3("land");*)
