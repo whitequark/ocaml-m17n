@@ -21,6 +21,7 @@ build-test: [
 depends: [
   "ocamlfind"    {build}
   "cppo"         {build}
+  "cppo_ocamlbuild" {build}
   "sedlex"
   "uutf"         {>= "1.0.0" & < "2.0.0"}
   "uunf"         {>= "2.0.0" & < "3.0.0"}
