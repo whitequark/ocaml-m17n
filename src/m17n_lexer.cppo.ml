@@ -200,7 +200,10 @@ let in_comment { comment_start } = comment_start = []
    See https://github.com/alainfrisch/sedlex/issues/20 *)
 let check_id_start offset lexbuf =
   let id_char = List.nth (Sedlexing.lexeme lexbuf) offset in
-  if not (Uucp.Id.is_id_start id_char) then
+  match id_char with
+  | _ when Uchar.to_int id_char = 0x005F (* LOW LINE *) -> ()
+  | _ when (Uucp.Id.is_id_start id_char) -> ()
+  | _ ->
     raise (Error (Illegal_character id_char, Sedlexing.location lexbuf))
 
 let check_mixed_script exts =
